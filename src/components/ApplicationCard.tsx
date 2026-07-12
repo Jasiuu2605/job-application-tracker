@@ -54,9 +54,19 @@ export function ApplicationCard({
           label='Salary'
           value={application.salaryRange || 'Not specified'}
         />
+        <Detail
+          label='Follow-up'
+          value={formatFollowUp(application.followUpAt)}
+        />
         <Detail label='Source' value={application.source || 'Not specified'} />
         <Detail label='Mode' value={workModeLabels[application.workMode]} />
       </dl>
+
+      {isFollowUpDue(application.followUpAt) ? (
+        <div className='mt-5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800'>
+          Follow-up is due
+        </div>
+      ) : null}
 
       {application.notes ? (
         <div className='mt-5 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-600'>
@@ -113,4 +123,26 @@ function formatDate(dateValue: string) {
     day: 'numeric',
     year: 'numeric',
   }).format(new Date(dateValue));
+}
+
+function formatFollowUp(dateValue?: string) {
+  if (!dateValue) {
+    return 'Not set';
+  }
+
+  return formatDate(dateValue);
+}
+
+function isFollowUpDue(dateValue?: string) {
+  if (!dateValue) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const followUpDate = new Date(dateValue);
+  followUpDate.setHours(0, 0, 0, 0);
+
+  return followUpDate <= today;
 }

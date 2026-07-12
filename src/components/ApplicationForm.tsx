@@ -26,6 +26,7 @@ type FormState = {
   salaryRange: string;
   source: string;
   notes: string;
+  followUpAt: string;
 };
 
 const initialFormState: FormState = {
@@ -38,6 +39,7 @@ const initialFormState: FormState = {
   salaryRange: '',
   source: '',
   notes: '',
+  followUpAt: '',
 };
 
 function getFormStateFromApplication(application: JobApplication): FormState {
@@ -52,6 +54,7 @@ function getFormStateFromApplication(application: JobApplication): FormState {
     salaryRange: application.salaryRange ?? '',
     source: application.source ?? '',
     notes: application.notes ?? '',
+    followUpAt: application.followUpAt ?? '',
   };
 }
 
@@ -103,6 +106,7 @@ export function ApplicationForm({
       salaryRange: formState.salaryRange.trim() || undefined,
       source: formState.source.trim() || undefined,
       notes: formState.notes.trim() || undefined,
+      followUpAt: formState.followUpAt || undefined,
     };
 
     if (editingApplication) {
@@ -197,6 +201,12 @@ export function ApplicationForm({
           type='date'
           value={formState.appliedAt}
           onChange={(value) => updateField('appliedAt', value)}
+        />
+        <TextField
+          label='Follow-up date'
+          type='date'
+          value={formState.followUpAt}
+          onChange={(value) => updateField('followUpAt', value)}
         />
         <TextField
           label='Salary range'

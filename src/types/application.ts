@@ -13,6 +13,7 @@ export type JobApplication = {
   salaryRange?: string;
   source?: string;
   notes?: string;
+  followUpAt?: string;
 };
 
 export const applicationStatuses: ApplicationStatus[] = [
