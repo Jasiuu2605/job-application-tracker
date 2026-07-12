@@ -17,6 +17,12 @@ import { loadApplications, saveApplications } from '@/src/utils/localStorage';
 
 type StatusFilter = ApplicationStatus | 'all';
 type WorkModeFilter = WorkMode | 'all';
+type SortOption =
+  | 'newest'
+  | 'oldest'
+  | 'company-asc'
+  | 'company-desc'
+  | 'status';
 
 export default function Home() {
   const [applications, setApplications] =
@@ -28,6 +34,7 @@ export default function Home() {
   const [workModeFilter, setWorkModeFilter] = useState<WorkModeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>('newest');
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -47,7 +54,7 @@ export default function Home() {
   const filteredApplications = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
 
-    return applications.filter((application) => {
+    const filtered = applications.filter((application) => {
       const matchesStatus =
         statusFilter === 'all' || application.status === statusFilter;
       const matchesWorkMode =
@@ -59,7 +66,37 @@ export default function Home() {
 
       return matchesStatus && matchesWorkMode && matchesSearch;
     });
-  }, [applications, searchQuery, statusFilter, workModeFilter]);
+
+    return [...filtered].sort((firstApplication, secondApplication) => {
+      if (sortOption === 'newest') {
+        return (
+          new Date(secondApplication.appliedAt).getTime() -
+          new Date(firstApplication.appliedAt).getTime()
+        );
+      }
+
+      if (sortOption === 'oldest') {
+        return (
+          new Date(firstApplication.appliedAt).getTime() -
+          new Date(secondApplication.appliedAt).getTime()
+        );
+      }
+
+      if (sortOption === 'company-asc') {
+        return firstApplication.company.localeCompare(
+          secondApplication.company,
+        );
+      }
+
+      if (sortOption === 'company-desc') {
+        return secondApplication.company.localeCompare(
+          firstApplication.company,
+        );
+      }
+
+      return firstApplication.status.localeCompare(secondApplication.status);
+    });
+  }, [applications, searchQuery, sortOption, statusFilter, workModeFilter]);
 
   const stats = useMemo(
     () => calculateApplicationStats(applications),
@@ -133,9 +170,11 @@ export default function Home() {
               searchQuery={searchQuery}
               statusFilter={statusFilter}
               workModeFilter={workModeFilter}
+              sortOption={sortOption}
               onSearchChange={setSearchQuery}
               onStatusChange={setStatusFilter}
               onWorkModeChange={setWorkModeFilter}
+              onSortChange={setSortOption}
             />
 
             <div className='flex items-center justify-between gap-4'>
