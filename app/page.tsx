@@ -21,6 +21,9 @@ type WorkModeFilter = WorkMode | 'all';
 export default function Home() {
   const [applications, setApplications] =
     useState<JobApplication[]>(mockApplications);
+  const [editingApplication, setEditingApplication] =
+    useState<JobApplication | null>(null);
+
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [workModeFilter, setWorkModeFilter] = useState<WorkModeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,11 +73,26 @@ export default function Home() {
     ]);
   }
 
+  function handleUpdateApplication(updatedApplication: JobApplication) {
+    setApplications((currentApplications) =>
+      currentApplications.map((application) =>
+        application.id === updatedApplication.id
+          ? updatedApplication
+          : application,
+      ),
+    );
+    setEditingApplication(null);
+  }
+
   function handleDeleteApplication(applicationId: string) {
     setApplications((currentApplications) =>
       currentApplications.filter(
         (application) => application.id !== applicationId,
       ),
+    );
+
+    setEditingApplication((currentApplication) =>
+      currentApplication?.id === applicationId ? null : currentApplication,
     );
   }
 
@@ -146,6 +164,7 @@ export default function Home() {
                     key={application.id}
                     application={application}
                     onDelete={handleDeleteApplication}
+                    onEdit={setEditingApplication}
                   />
                 ))}
               </div>
@@ -166,7 +185,12 @@ export default function Home() {
             ) : null}
           </div>
 
-          <ApplicationForm onAddApplication={handleAddApplication} />
+          <ApplicationForm
+            editingApplication={editingApplication}
+            onAddApplication={handleAddApplication}
+            onUpdateApplication={handleUpdateApplication}
+            onCancelEdit={() => setEditingApplication(null)}
+          />
         </section>
       </div>
     </main>
