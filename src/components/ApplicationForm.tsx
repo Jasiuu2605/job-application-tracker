@@ -1,0 +1,214 @@
+import { type FormEvent, useState } from "react";
+import {
+  applicationStatuses,
+  statusLabels,
+  workModeLabels,
+  workModes,
+  type ApplicationStatus,
+  type JobApplication,
+  type WorkMode,
+} from "@/src/types/application";
+
+type ApplicationFormProps = {
+  onAddApplication: (application: JobApplication) => void;
+};
+
+type FormState = {
+  company: string;
+  position: string;
+  location: string;
+  workMode: WorkMode;
+  status: ApplicationStatus;
+  appliedAt: string;
+  salaryRange: string;
+  source: string;
+  notes: string;
+};
+
+const initialFormState: FormState = {
+  company: "",
+  position: "",
+  location: "",
+  workMode: "remote",
+  status: "applied",
+  appliedAt: "",
+  salaryRange: "",
+  source: "",
+  notes: "",
+};
+
+export function ApplicationForm({ onAddApplication }: ApplicationFormProps) {
+  const [formState, setFormState] = useState<FormState>(initialFormState);
+  const [error, setError] = useState("");
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!formState.company.trim() || !formState.position.trim() || !formState.status) {
+      setError("Company, position and status are required.");
+      return;
+    }
+
+    onAddApplication({
+      id: createApplicationId(),
+      company: formState.company.trim(),
+      position: formState.position.trim(),
+      location: formState.location.trim() || "Not specified",
+      workMode: formState.workMode,
+      status: formState.status,
+      appliedAt: formState.appliedAt || new Date().toISOString().slice(0, 10),
+      salaryRange: formState.salaryRange.trim() || undefined,
+      source: formState.source.trim() || undefined,
+      notes: formState.notes.trim() || undefined,
+    });
+
+    setFormState(initialFormState);
+    setError("");
+  }
+
+  function updateField<Field extends keyof FormState>(field: Field, value: FormState[Field]) {
+    setFormState((currentState) => ({
+      ...currentState,
+      [field]: value,
+    }));
+  }
+
+  return (
+    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
+      <h2 className="text-xl font-semibold text-slate-950">Add application</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-500">
+        Keep the essential details in one place so every next step is visible.
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-5 grid gap-4">
+        <TextField
+          label="Company name"
+          value={formState.company}
+          onChange={(value) => updateField("company", value)}
+          required
+        />
+        <TextField
+          label="Position"
+          value={formState.position}
+          onChange={(value) => updateField("position", value)}
+          required
+        />
+        <TextField
+          label="Location"
+          value={formState.location}
+          onChange={(value) => updateField("location", value)}
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+            Work mode
+            <select
+              value={formState.workMode}
+              onChange={(event) => updateField("workMode", event.target.value as WorkMode)}
+              className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            >
+              {workModes.map((mode) => (
+                <option key={mode} value={mode}>
+                  {workModeLabels[mode]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+            Status
+            <select
+              value={formState.status}
+              onChange={(event) => updateField("status", event.target.value as ApplicationStatus)}
+              className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+              required
+            >
+              {applicationStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {statusLabels[status]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <TextField
+          label="Applied date"
+          type="date"
+          value={formState.appliedAt}
+          onChange={(value) => updateField("appliedAt", value)}
+        />
+        <TextField
+          label="Salary range"
+          value={formState.salaryRange}
+          onChange={(value) => updateField("salaryRange", value)}
+          placeholder="12k-16k PLN"
+        />
+        <TextField
+          label="Source"
+          value={formState.source}
+          onChange={(value) => updateField("source", value)}
+          placeholder="LinkedIn, referral, company page"
+        />
+
+        <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+          Notes
+          <textarea
+            value={formState.notes}
+            onChange={(event) => updateField("notes", event.target.value)}
+            rows={4}
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            placeholder="Response details, follow-up date, next steps"
+          />
+        </label>
+
+        {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
+
+        <button
+          type="submit"
+          className="mt-1 rounded-md bg-teal-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-200"
+        >
+          Add application
+        </button>
+      </form>
+    </aside>
+  );
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  required?: boolean;
+}) {
+  return (
+    <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+      {label}
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        required={required}
+        className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+      />
+    </label>
+  );
+}
+
+function createApplicationId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `application-${Date.now()}`;
+}

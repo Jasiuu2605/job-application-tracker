@@ -1,65 +1,139 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { ApplicationCard } from "@/src/components/ApplicationCard";
+import { ApplicationForm } from "@/src/components/ApplicationForm";
+import { DashboardStats } from "@/src/components/DashboardStats";
+import { EmptyState } from "@/src/components/EmptyState";
+import { Filters } from "@/src/components/Filters";
+import { mockApplications } from "@/src/data/mockApplications";
+import type { JobApplication, ApplicationStatus, WorkMode } from "@/src/types/application";
+import { calculateApplicationStats } from "@/src/utils/applicationStats";
+import { loadApplications, saveApplications } from "@/src/utils/localStorage";
+
+type StatusFilter = ApplicationStatus | "all";
+type WorkModeFilter = WorkMode | "all";
 
 export default function Home() {
+  const [applications, setApplications] = useState<JobApplication[]>(mockApplications);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [workModeFilter, setWorkModeFilter] = useState<WorkModeFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setApplications(loadApplications(mockApplications));
+      setHasLoadedStorage(true);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    if (hasLoadedStorage) {
+      saveApplications(applications);
+    }
+  }, [applications, hasLoadedStorage]);
+
+  const filteredApplications = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+
+    return applications.filter((application) => {
+      const matchesStatus = statusFilter === "all" || application.status === statusFilter;
+      const matchesWorkMode = workModeFilter === "all" || application.workMode === workModeFilter;
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        application.company.toLowerCase().includes(normalizedSearch) ||
+        application.position.toLowerCase().includes(normalizedSearch);
+
+      return matchesStatus && matchesWorkMode && matchesSearch;
+    });
+  }, [applications, searchQuery, statusFilter, workModeFilter]);
+
+  const stats = useMemo(() => calculateApplicationStats(applications), [applications]);
+
+  function handleAddApplication(application: JobApplication) {
+    setApplications((currentApplications) => [application, ...currentApplications]);
+  }
+
+  const hasActiveFilters =
+    statusFilter !== "all" || workModeFilter !== "all" || searchQuery.trim().length > 0;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+        <header className="flex flex-col gap-3 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-teal-700">Portfolio project</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+              Job Application Tracker
+            </h1>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+              Track where you applied, what happened next, and which opportunities need follow-up.
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+            <span className="font-semibold text-slate-950">{applications.length}</span> saved applications
+          </div>
+        </header>
+
+        <DashboardStats stats={stats} />
+
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+          <div className="flex flex-col gap-5">
+            <Filters
+              searchQuery={searchQuery}
+              statusFilter={statusFilter}
+              workModeFilter={workModeFilter}
+              onSearchChange={setSearchQuery}
+              onStatusChange={setStatusFilter}
+              onWorkModeChange={setWorkModeFilter}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-xl font-semibold text-slate-950">Applications</h2>
+              <p className="text-sm text-slate-500">
+                Showing {filteredApplications.length} of {applications.length}
+              </p>
+            </div>
+
+            {applications.length === 0 ? (
+              <EmptyState
+                title="No applications yet"
+                description="Add your first job application to start tracking your search."
+              />
+            ) : filteredApplications.length === 0 ? (
+              <EmptyState
+                title="No matches found"
+                description="Try changing the filters or search text to see more applications."
+              />
+            ) : (
+              <div className="grid gap-4">
+                {filteredApplications.map((application) => (
+                  <ApplicationCard key={application.id} application={application} />
+                ))}
+              </div>
+            )}
+
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter("all");
+                  setWorkModeFilter("all");
+                  setSearchQuery("");
+                }}
+                className="w-fit rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-100"
+              >
+                Clear filters
+              </button>
+            ) : null}
+          </div>
+
+          <ApplicationForm onAddApplication={handleAddApplication} />
+        </section>
+      </div>
+    </main>
   );
 }
