@@ -20,22 +20,26 @@ type FiltersProps = {
   searchQuery: string;
   statusFilter: StatusFilter;
   workModeFilter: WorkModeFilter;
+  sortOption: SortOption;
+  showDueFollowUps: boolean;
   onSearchChange: (value: string) => void;
   onStatusChange: (value: StatusFilter) => void;
   onWorkModeChange: (value: WorkModeFilter) => void;
-  sortOption: SortOption;
   onSortChange: (value: SortOption) => void;
+  onShowDueFollowUpsChange: (value: boolean) => void;
 };
 
 export function Filters({
   searchQuery,
   statusFilter,
   workModeFilter,
+  sortOption,
+  showDueFollowUps,
   onSearchChange,
   onStatusChange,
   onWorkModeChange,
-  sortOption,
   onSortChange,
+  onShowDueFollowUpsChange,
 }: FiltersProps) {
   return (
     <section className='rounded-lg border border-slate-200 bg-white p-4 shadow-sm'>
@@ -101,6 +105,15 @@ export function Filters({
           </select>
         </label>
       </div>
+      <label className='mt-4 flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-700'>
+        <input
+          type='checkbox'
+          checked={showDueFollowUps}
+          onChange={(event) => onShowDueFollowUpsChange(event.target.checked)}
+          className='h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600'
+        />
+        Show only due follow-ups
+      </label>
     </section>
   );
 }

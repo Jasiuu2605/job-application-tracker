@@ -5,6 +5,8 @@ import {
   type ApplicationStatus,
 } from '@/src/types/application';
 
+import { isFollowUpDue } from '@/src/utils/followUp';
+
 type ApplicationCardProps = {
   application: JobApplication;
   onDelete: (applicationId: string) => void;
@@ -133,16 +135,3 @@ function formatFollowUp(dateValue?: string) {
   return formatDate(dateValue);
 }
 
-function isFollowUpDue(dateValue?: string) {
-  if (!dateValue) {
-    return false;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const followUpDate = new Date(dateValue);
-  followUpDate.setHours(0, 0, 0, 0);
-
-  return followUpDate <= today;
-}

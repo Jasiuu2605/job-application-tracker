@@ -14,6 +14,7 @@ import type {
 } from '@/src/types/application';
 import { calculateApplicationStats } from '@/src/utils/applicationStats';
 import { loadApplications, saveApplications } from '@/src/utils/localStorage';
+import { isFollowUpDue } from '@/src/utils/followUp';
 
 type StatusFilter = ApplicationStatus | 'all';
 type WorkModeFilter = WorkMode | 'all';
@@ -35,6 +36,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>('newest');
+  const [showDueFollowUps, setShowDueFollowUps] = useState(false);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -64,7 +66,12 @@ export default function Home() {
         application.company.toLowerCase().includes(normalizedSearch) ||
         application.position.toLowerCase().includes(normalizedSearch);
 
-      return matchesStatus && matchesWorkMode && matchesSearch;
+      const matchesFollowUp =
+        !showDueFollowUps || isFollowUpDue(application.followUpAt);
+
+      return (
+        matchesStatus && matchesWorkMode && matchesSearch && matchesFollowUp
+      );
     });
 
     return [...filtered].sort((firstApplication, secondApplication) => {
@@ -96,7 +103,14 @@ export default function Home() {
 
       return firstApplication.status.localeCompare(secondApplication.status);
     });
-  }, [applications, searchQuery, sortOption, statusFilter, workModeFilter]);
+  }, [
+    applications,
+    searchQuery,
+    showDueFollowUps,
+    sortOption,
+    statusFilter,
+    workModeFilter,
+  ]);
 
   const stats = useMemo(
     () => calculateApplicationStats(applications),
@@ -136,6 +150,7 @@ export default function Home() {
   const hasActiveFilters =
     statusFilter !== 'all' ||
     workModeFilter !== 'all' ||
+    showDueFollowUps ||
     searchQuery.trim().length > 0;
 
   return (
@@ -171,10 +186,12 @@ export default function Home() {
               statusFilter={statusFilter}
               workModeFilter={workModeFilter}
               sortOption={sortOption}
+              showDueFollowUps={showDueFollowUps}
               onSearchChange={setSearchQuery}
               onStatusChange={setStatusFilter}
               onWorkModeChange={setWorkModeFilter}
               onSortChange={setSortOption}
+              onShowDueFollowUpsChange={setShowDueFollowUps}
             />
 
             <div className='flex items-center justify-between gap-4'>
