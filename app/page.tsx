@@ -13,8 +13,14 @@ import type {
   WorkMode,
 } from '@/src/types/application';
 import { calculateApplicationStats } from '@/src/utils/applicationStats';
-import { loadApplications, saveApplications } from '@/src/utils/localStorage';
 import { isFollowUpDue } from '@/src/utils/followUp';
+
+import {
+  createApplication,
+  deleteApplication,
+  getApplications,
+  updateApplication,
+} from '@/src/services/application.service';
 
 type StatusFilter = ApplicationStatus | 'all';
 type WorkModeFilter = WorkMode | 'all';
@@ -34,24 +40,35 @@ export default function Home() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [workModeFilter, setWorkModeFilter] = useState<WorkModeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [showDueFollowUps, setShowDueFollowUps] = useState(false);
 
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setApplications(loadApplications(mockApplications));
-      setHasLoadedStorage(true);
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(true);
+  const [applicationsError, setApplicationsError] = useState('');
 
   useEffect(() => {
-    if (hasLoadedStorage) {
-      saveApplications(applications);
+    async function loadFirestoreApplications() {
+      try {
+        setIsLoadingApplications(true);
+        setApplicationsError('');
+
+        const firestoreApplications = await getApplications();
+
+        setApplications(
+          firestoreApplications.length > 0
+            ? firestoreApplications
+            : mockApplications,
+        );
+      } catch {
+        setApplicationsError('Could not load applications from Firestore.');
+        setApplications(mockApplications);
+      } finally {
+        setIsLoadingApplications(false);
+      }
     }
-  }, [applications, hasLoadedStorage]);
+
+    void loadFirestoreApplications();
+  }, []);
 
   const filteredApplications = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -117,34 +134,58 @@ export default function Home() {
     [applications],
   );
 
-  function handleAddApplication(application: JobApplication) {
-    setApplications((currentApplications) => [
-      application,
-      ...currentApplications,
-    ]);
+  async function handleAddApplication(application: JobApplication) {
+    try {
+      setApplicationsError('');
+
+      await createApplication(application);
+
+      setApplications((currentApplications) => [
+        application,
+        ...currentApplications,
+      ]);
+    } catch (error) {
+      setApplicationsError('Could not save application to Firestore.');
+    }
   }
 
-  function handleUpdateApplication(updatedApplication: JobApplication) {
-    setApplications((currentApplications) =>
-      currentApplications.map((application) =>
-        application.id === updatedApplication.id
-          ? updatedApplication
-          : application,
-      ),
-    );
-    setEditingApplication(null);
+  async function handleUpdateApplication(updatedApplication: JobApplication) {
+    try {
+      setApplicationsError('');
+
+      await updateApplication(updatedApplication);
+
+      setApplications((currentApplications) =>
+        currentApplications.map((application) =>
+          application.id === updatedApplication.id
+            ? updatedApplication
+            : application,
+        ),
+      );
+      setEditingApplication(null);
+    } catch (error) {
+      setApplicationsError('Could not update application in Firestore.');
+    }
   }
 
-  function handleDeleteApplication(applicationId: string) {
-    setApplications((currentApplications) =>
-      currentApplications.filter(
-        (application) => application.id !== applicationId,
-      ),
-    );
+  async function handleDeleteApplication(applicationId: string) {
+    try {
+      setApplicationsError('');
 
-    setEditingApplication((currentApplication) =>
-      currentApplication?.id === applicationId ? null : currentApplication,
-    );
+      await deleteApplication(applicationId);
+
+      setApplications((currentApplications) =>
+        currentApplications.filter(
+          (application) => application.id !== applicationId,
+        ),
+      );
+
+      setEditingApplication((currentApplication) =>
+        currentApplication?.id === applicationId ? null : currentApplication,
+      );
+    } catch (error) {
+      setApplicationsError('Could not delete application from Firestore.');
+    }
   }
 
   const hasActiveFilters =
@@ -203,17 +244,29 @@ export default function Home() {
               </p>
             </div>
 
-            {applications.length === 0 ? (
+            {applicationsError ? (
+              <div className='rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700'>
+                {applicationsError}
+              </div>
+            ) : null}
+
+            {isLoadingApplications ? (
+              <div className='rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm'>
+                Loading applications...
+              </div>
+            ) : null}
+
+            {!isLoadingApplications && applications.length === 0 ? (
               <EmptyState
                 title='No applications yet'
                 description='Add your first job application to start tracking your search.'
               />
-            ) : filteredApplications.length === 0 ? (
+            ) : !isLoadingApplications && filteredApplications.length === 0 ? (
               <EmptyState
                 title='No matches found'
                 description='Try changing the filters or search text to see more applications.'
               />
-            ) : (
+            ) : !isLoadingApplications ? (
               <div className='grid gap-4'>
                 {filteredApplications.map((application) => (
                   <ApplicationCard
@@ -224,7 +277,7 @@ export default function Home() {
                   />
                 ))}
               </div>
-            )}
+            ) : null}
 
             {hasActiveFilters ? (
               <button

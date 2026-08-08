@@ -10,6 +10,12 @@ import {
 import { db, workspaceId } from '@/src/lib/firebase';
 import type { JobApplication } from '@/src/types/application';
 
+function removeUndefinedFields(application: JobApplication) {
+  return Object.fromEntries(
+    Object.entries(application).filter(([, value]) => value !== undefined),
+  ) as JobApplication;
+}
+
 function getApplicationsCollectionRef() {
   return collection(db, 'workspaces', workspaceId, 'applications');
 }
@@ -31,13 +37,13 @@ export async function getApplications() {
 export async function createApplication(application: JobApplication) {
   const applicationRef = doc(getApplicationsCollectionRef(), application.id);
 
-  await setDoc(applicationRef, application);
+  await setDoc(applicationRef, removeUndefinedFields(application));
 }
 
 export async function updateApplication(application: JobApplication) {
   const applicationRef = doc(getApplicationsCollectionRef(), application.id);
 
-  await setDoc(applicationRef, application);
+  await setDoc(applicationRef, removeUndefinedFields(application));
 }
 
 export async function deleteApplication(applicationId: string) {
