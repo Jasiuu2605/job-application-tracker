@@ -95,6 +95,8 @@ export function ApplicationForm({
       return;
     }
 
+    const now = new Date().toISOString();
+
     const application: JobApplication = {
       id: editingApplication?.id ?? createApplicationId(),
       company: formState.company.trim(),
@@ -103,6 +105,8 @@ export function ApplicationForm({
       workMode: formState.workMode,
       status: formState.status,
       appliedAt: formState.appliedAt || new Date().toISOString().slice(0, 10),
+      createdAt: editingApplication?.createdAt ?? now,
+      updatedAt: now,
       salaryRange: formState.salaryRange.trim() || undefined,
       source: formState.source.trim() || undefined,
       notes: formState.notes.trim() || undefined,

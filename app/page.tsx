@@ -138,7 +138,7 @@ export default function Home() {
         application,
         ...currentApplications,
       ]);
-    } catch (error) {
+    } catch {
       setApplicationsError('Could not save application to Firestore.');
     }
   }
@@ -157,7 +157,7 @@ export default function Home() {
         ),
       );
       setEditingApplication(null);
-    } catch (error) {
+    } catch {
       setApplicationsError('Could not update application in Firestore.');
     }
   }
@@ -177,7 +177,7 @@ export default function Home() {
       setEditingApplication((currentApplication) =>
         currentApplication?.id === applicationId ? null : currentApplication,
       );
-    } catch (error) {
+    } catch {
       setApplicationsError('Could not delete application from Firestore.');
     }
   }

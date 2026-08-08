@@ -1,6 +1,11 @@
-export type ApplicationStatus = "saved" | "applied" | "interview" | "rejected" | "offer";
+export type ApplicationStatus =
+  | 'saved'
+  | 'applied'
+  | 'interview'
+  | 'rejected'
+  | 'offer';
 
-export type WorkMode = "remote" | "hybrid" | "onsite";
+export type WorkMode = 'remote' | 'hybrid' | 'onsite';
 
 export type JobApplication = {
   id: string;
@@ -14,28 +19,30 @@ export type JobApplication = {
   source?: string;
   notes?: string;
   followUpAt?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export const applicationStatuses: ApplicationStatus[] = [
-  "saved",
-  "applied",
-  "interview",
-  "rejected",
-  "offer",
+  'saved',
+  'applied',
+  'interview',
+  'rejected',
+  'offer',
 ];
 
-export const workModes: WorkMode[] = ["remote", "hybrid", "onsite"];
+export const workModes: WorkMode[] = ['remote', 'hybrid', 'onsite'];
 
 export const statusLabels: Record<ApplicationStatus, string> = {
-  saved: "Saved",
-  applied: "Applied",
-  interview: "Interview",
-  rejected: "Rejected",
-  offer: "Offer",
+  saved: 'Saved',
+  applied: 'Applied',
+  interview: 'Interview',
+  rejected: 'Rejected',
+  offer: 'Offer',
 };
 
 export const workModeLabels: Record<WorkMode, string> = {
-  remote: "Remote",
-  hybrid: "Hybrid",
-  onsite: "On-site",
+  remote: 'Remote',
+  hybrid: 'Hybrid',
+  onsite: 'On-site',
 };

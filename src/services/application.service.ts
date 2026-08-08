@@ -16,6 +16,16 @@ function removeUndefinedFields(application: JobApplication) {
   ) as JobApplication;
 }
 
+function normalizeApplication(application: JobApplication): JobApplication {
+  const now = new Date().toISOString();
+
+  return {
+    ...application,
+    createdAt: application.createdAt ?? now,
+    updatedAt: application.updatedAt ?? now,
+  };
+}
+
 function getApplicationsCollectionRef() {
   return collection(db, 'workspaces', workspaceId, 'applications');
 }
@@ -28,10 +38,12 @@ export async function getApplications() {
 
   const snapshot = await getDocs(applicationsQuery);
 
-  return snapshot.docs.map((documentSnapshot) => ({
-    id: documentSnapshot.id,
-    ...documentSnapshot.data(),
-  })) as JobApplication[];
+  return snapshot.docs.map((documentSnapshot) =>
+    normalizeApplication({
+      id: documentSnapshot.id,
+      ...documentSnapshot.data(),
+    } as JobApplication),
+  );
 }
 
 export async function createApplication(application: JobApplication) {
