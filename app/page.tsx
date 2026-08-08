@@ -252,8 +252,8 @@ export default function Home() {
 
             {!isLoadingApplications && applications.length === 0 ? (
               <EmptyState
-                title='No applications yet'
-                description='Add your first job application to start tracking your search.'
+                title='No applications in Firestore yet'
+                description='Add your first job application and it will be saved to your Firebase workspace.'
               />
             ) : !isLoadingApplications && filteredApplications.length === 0 ? (
               <EmptyState
