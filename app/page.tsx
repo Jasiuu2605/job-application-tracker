@@ -6,7 +6,6 @@ import { ApplicationForm } from '@/src/components/ApplicationForm';
 import { DashboardStats } from '@/src/components/DashboardStats';
 import { EmptyState } from '@/src/components/EmptyState';
 import { Filters } from '@/src/components/Filters';
-import { mockApplications } from '@/src/data/mockApplications';
 import type {
   JobApplication,
   ApplicationStatus,
@@ -32,8 +31,7 @@ type SortOption =
   | 'status';
 
 export default function Home() {
-  const [applications, setApplications] =
-    useState<JobApplication[]>(mockApplications);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [editingApplication, setEditingApplication] =
     useState<JobApplication | null>(null);
 
@@ -54,14 +52,10 @@ export default function Home() {
 
         const firestoreApplications = await getApplications();
 
-        setApplications(
-          firestoreApplications.length > 0
-            ? firestoreApplications
-            : mockApplications,
-        );
+        setApplications(firestoreApplications);
       } catch {
         setApplicationsError('Could not load applications from Firestore.');
-        setApplications(mockApplications);
+        setApplications([]);
       } finally {
         setIsLoadingApplications(false);
       }
