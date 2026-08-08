@@ -43,12 +43,14 @@ export default function Home() {
 
   const [isLoadingApplications, setIsLoadingApplications] = useState(true);
   const [applicationsError, setApplicationsError] = useState('');
+  const [applicationsSuccess, setApplicationsSuccess] = useState('');
 
   useEffect(() => {
     async function loadFirestoreApplications() {
       try {
         setIsLoadingApplications(true);
         setApplicationsError('');
+        setApplicationsSuccess('');
 
         const firestoreApplications = await getApplications();
 
@@ -56,6 +58,7 @@ export default function Home() {
       } catch {
         setApplicationsError('Could not load applications from Firestore.');
         setApplications([]);
+        setApplicationsSuccess('');
       } finally {
         setIsLoadingApplications(false);
       }
@@ -63,6 +66,18 @@ export default function Home() {
 
     void loadFirestoreApplications();
   }, []);
+
+  useEffect(() => {
+    if (!applicationsSuccess) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setApplicationsSuccess('');
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [applicationsSuccess]);
 
   const filteredApplications = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -131,6 +146,7 @@ export default function Home() {
   async function handleAddApplication(application: JobApplication) {
     try {
       setApplicationsError('');
+      setApplicationsSuccess('');
 
       await createApplication(application);
 
@@ -138,7 +154,9 @@ export default function Home() {
         application,
         ...currentApplications,
       ]);
+      setApplicationsSuccess('Application saved to Firestore.');
     } catch {
+      setApplicationsSuccess('');
       setApplicationsError('Could not save application to Firestore.');
     }
   }
@@ -146,6 +164,7 @@ export default function Home() {
   async function handleUpdateApplication(updatedApplication: JobApplication) {
     try {
       setApplicationsError('');
+      setApplicationsSuccess('');
 
       await updateApplication(updatedApplication);
 
@@ -157,7 +176,9 @@ export default function Home() {
         ),
       );
       setEditingApplication(null);
+      setApplicationsSuccess('Application updated in Firestore.');
     } catch {
+      setApplicationsSuccess('');
       setApplicationsError('Could not update application in Firestore.');
     }
   }
@@ -165,6 +186,7 @@ export default function Home() {
   async function handleDeleteApplication(applicationId: string) {
     try {
       setApplicationsError('');
+      setApplicationsSuccess('');
 
       await deleteApplication(applicationId);
 
@@ -177,7 +199,9 @@ export default function Home() {
       setEditingApplication((currentApplication) =>
         currentApplication?.id === applicationId ? null : currentApplication,
       );
+      setApplicationsSuccess('Application deleted from Firestore.');
     } catch {
+      setApplicationsSuccess('');
       setApplicationsError('Could not delete application from Firestore.');
     }
   }
@@ -241,6 +265,12 @@ export default function Home() {
             {applicationsError ? (
               <div className='rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700'>
                 {applicationsError}
+              </div>
+            ) : null}
+
+            {applicationsSuccess ? (
+              <div className='rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700'>
+                {applicationsSuccess}
               </div>
             ) : null}
 
