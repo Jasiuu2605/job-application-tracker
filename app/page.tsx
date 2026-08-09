@@ -63,13 +63,15 @@ export default function Home() {
       return () => window.clearTimeout(timeoutId);
     }
 
+    const userId = user.uid;
+
     async function loadFirestoreApplications() {
       try {
         setIsLoadingApplications(true);
         setApplicationsError('');
         setApplicationsSuccess('');
 
-        const firestoreApplications = await getApplications();
+        const firestoreApplications = await getApplications(userId);
 
         setApplications(firestoreApplications);
       } catch {
@@ -165,7 +167,12 @@ export default function Home() {
       setApplicationsError('');
       setApplicationsSuccess('');
 
-      await createApplication(application);
+      if (!user) {
+        setApplicationsError('Sign in to save applications.');
+        return;
+      }
+
+      await createApplication(user.uid, application);
 
       setApplications((currentApplications) => [
         application,
@@ -183,7 +190,12 @@ export default function Home() {
       setApplicationsError('');
       setApplicationsSuccess('');
 
-      await updateApplication(updatedApplication);
+      if (!user) {
+        setApplicationsError('Sign in to update applications.');
+        return;
+      }
+
+      await updateApplication(user.uid, updatedApplication);
 
       setApplications((currentApplications) =>
         currentApplications.map((application) =>
@@ -205,7 +217,12 @@ export default function Home() {
       setApplicationsError('');
       setApplicationsSuccess('');
 
-      await deleteApplication(applicationId);
+      if (!user) {
+        setApplicationsError('Sign in to delete applications.');
+        return;
+      }
+
+      await deleteApplication(user.uid, applicationId);
 
       setApplications((currentApplications) =>
         currentApplications.filter(

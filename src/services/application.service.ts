@@ -7,7 +7,7 @@ import {
   query,
   setDoc,
 } from 'firebase/firestore';
-import { db, workspaceId } from '@/src/lib/firebase';
+import { db } from '@/src/lib/firebase';
 import type { JobApplication } from '@/src/types/application';
 
 function removeUndefinedFields(application: JobApplication) {
@@ -26,13 +26,13 @@ function normalizeApplication(application: JobApplication): JobApplication {
   };
 }
 
-function getApplicationsCollectionRef() {
-  return collection(db, 'workspaces', workspaceId, 'applications');
+function getApplicationsCollectionRef(userId: string) {
+  return collection(db, 'users', userId, 'applications');
 }
 
-export async function getApplications() {
+export async function getApplications(userId: string) {
   const applicationsQuery = query(
-    getApplicationsCollectionRef(),
+    getApplicationsCollectionRef(userId),
     orderBy('appliedAt', 'desc'),
   );
 
@@ -46,20 +46,35 @@ export async function getApplications() {
   );
 }
 
-export async function createApplication(application: JobApplication) {
-  const applicationRef = doc(getApplicationsCollectionRef(), application.id);
+export async function createApplication(
+  userId: string,
+  application: JobApplication,
+) {
+  const applicationRef = doc(
+    getApplicationsCollectionRef(userId),
+    application.id,
+  );
 
   await setDoc(applicationRef, removeUndefinedFields(application));
 }
 
-export async function updateApplication(application: JobApplication) {
-  const applicationRef = doc(getApplicationsCollectionRef(), application.id);
+export async function updateApplication(
+  userId: string,
+  application: JobApplication,
+) {
+  const applicationRef = doc(
+    getApplicationsCollectionRef(userId),
+    application.id,
+  );
 
   await setDoc(applicationRef, removeUndefinedFields(application));
 }
 
-export async function deleteApplication(applicationId: string) {
-  const applicationRef = doc(getApplicationsCollectionRef(), applicationId);
+export async function deleteApplication(userId: string, applicationId: string) {
+  const applicationRef = doc(
+    getApplicationsCollectionRef(userId),
+    applicationId,
+  );
 
   await deleteDoc(applicationRef);
 }
