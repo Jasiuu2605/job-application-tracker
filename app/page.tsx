@@ -1,5 +1,7 @@
 'use client';
 
+import { AuthPanel } from '@/src/components/AuthPanel';
+import { useAuthUser } from '@/src/hooks/useAuthUser';
 import { useEffect, useMemo, useState } from 'react';
 import { ApplicationCard } from '@/src/components/ApplicationCard';
 import { ApplicationForm } from '@/src/components/ApplicationForm';
@@ -31,6 +33,8 @@ type SortOption =
   | 'status';
 
 export default function Home() {
+  const { user, isAuthLoading } = useAuthUser();
+
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [editingApplication, setEditingApplication] =
     useState<JobApplication | null>(null);
@@ -46,6 +50,19 @@ export default function Home() {
   const [applicationsSuccess, setApplicationsSuccess] = useState('');
 
   useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
+    if (!user) {
+      const timeoutId = window.setTimeout(() => {
+        setApplications([]);
+        setIsLoadingApplications(false);
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
+    }
+
     async function loadFirestoreApplications() {
       try {
         setIsLoadingApplications(true);
@@ -65,7 +82,7 @@ export default function Home() {
     }
 
     void loadFirestoreApplications();
-  }, []);
+  }, [isAuthLoading, user]);
 
   useEffect(() => {
     if (!applicationsSuccess) {
@@ -228,11 +245,15 @@ export default function Home() {
               opportunities need follow-up.
             </p>
           </div>
-          <div className='rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm'>
-            <span className='font-semibold text-slate-950'>
-              {applications.length}
-            </span>{' '}
-            saved applications
+          <div className='flex flex-col gap-3 sm:items-end'>
+            <AuthPanel user={user} isAuthLoading={isAuthLoading} />
+
+            <div className='rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm'>
+              <span className='font-semibold text-slate-950'>
+                {applications.length}
+              </span>{' '}
+              saved applications
+            </div>
           </div>
         </header>
 
@@ -280,7 +301,12 @@ export default function Home() {
               </div>
             ) : null}
 
-            {!isLoadingApplications && applications.length === 0 ? (
+            {!isAuthLoading && !user ? (
+              <EmptyState
+                title='Sign in to view applications'
+                description='Use Google sign-in to load and manage your saved job applications.'
+              />
+            ) : !isLoadingApplications && applications.length === 0 ? (
               <EmptyState
                 title='No applications in Firestore yet'
                 description='Add your first job application and it will be saved to your Firebase workspace.'
@@ -318,12 +344,18 @@ export default function Home() {
             ) : null}
           </div>
 
-          <ApplicationForm
-            editingApplication={editingApplication}
-            onAddApplication={handleAddApplication}
-            onUpdateApplication={handleUpdateApplication}
-            onCancelEdit={() => setEditingApplication(null)}
-          />
+          {user ? (
+            <ApplicationForm
+              editingApplication={editingApplication}
+              onAddApplication={handleAddApplication}
+              onUpdateApplication={handleUpdateApplication}
+              onCancelEdit={() => setEditingApplication(null)}
+            />
+          ) : (
+            <aside className='rounded-lg border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-500 shadow-sm lg:sticky lg:top-6'>
+              Sign in with Google to add and manage job applications.
+            </aside>
+          )}
         </section>
       </div>
     </main>
