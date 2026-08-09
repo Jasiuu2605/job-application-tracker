@@ -1,28 +1,40 @@
 # Job Application Tracker
 
-A responsive web app for tracking job applications. It helps keep the job search process organized by storing applications, statuses, notes and follow-up dates in Firebase Firestore.
+A responsive web application for tracking job applications from the first saved offer to interviews, rejections, offers and follow-ups.
 
-The project is intentionally small, but it is built like a real frontend product: typed data model, reusable components, client-side filtering and sorting, Firestore persistence, loading states, error handling and action feedback.
+The project is intentionally compact, but it is built like a real frontend product: typed data model, reusable components, Google authentication, user-scoped Firestore data, client-side filtering and sorting, loading states, empty states, error handling and action feedback.
 
 ## Project Status
 
-This is a portfolio-focused frontend application. The current version uses Firebase Firestore as the data source and does not include authentication yet.
+This is a portfolio-focused frontend application built with Next.js and Firebase.
 
 Current scope:
 
-- Single-page dashboard
+- Single-page job application dashboard
+- Google sign-in with Firebase Authentication
 - Firestore CRUD for job applications
-- Workspace-based Firestore path
+- User-scoped Firestore data
+- User profile documents stored in Firestore
+- Firestore security rules for authenticated access
 - Responsive UI for desktop and mobile
-- Local form state for create/edit flows
+- Local form state for create and edit flows
 
 Planned scope:
 
-- Authentication
-- Stronger Firestore security rules
-- React Native companion app using the same data model
+- Production deployment
+- Screenshot and live demo link
+- React Native companion app using the same Firebase data model
+- Additional dashboard insights and application history
 
 ## Features
+
+### Authentication
+
+- Sign in with Google
+- Sign out from the app header
+- Show authenticated user name and email
+- Hide application management UI for signed-out users
+- Store a Firestore user profile document after sign-in
 
 ### Application Management
 
@@ -31,10 +43,12 @@ Planned scope:
 - Delete applications with confirmation
 - Persist all changes in Firebase Firestore
 - Keep `createdAt` and `updatedAt` timestamps for application records
+- Show success feedback after create, update and delete actions
+- Show error feedback when Firestore actions fail
 
 ### Tracked Fields
 
-Each application stores:
+Each job application stores:
 
 - Company name
 - Position
@@ -46,6 +60,8 @@ Each application stores:
 - Salary range
 - Source
 - Notes
+- Created timestamp
+- Updated timestamp
 
 ### Dashboard and Filtering
 
@@ -59,12 +75,12 @@ Each application stores:
 ### User Experience
 
 - Responsive dashboard-like layout
-- Empty state for an empty Firestore workspace
+- Authentication-aware empty state
+- Empty state for an empty Firestore account
 - Empty state for filters with no matches
-- Loading state while Firestore data is being fetched
+- Loading state while auth or Firestore data is being checked
 - Error messages for failed Firestore actions
-- Success messages for create, update and delete actions
-- Auto-hiding success feedback
+- Auto-hiding success messages
 
 ## Tech Stack
 
@@ -72,38 +88,50 @@ Each application stores:
 - React
 - TypeScript
 - Tailwind CSS
+- Firebase Authentication
 - Firebase Firestore
 
 ## Project Structure
 
 ```txt
 app/
-  layout.tsx              # Root layout and metadata
-  page.tsx                # Main dashboard page and app state orchestration
+  layout.tsx               # Root layout and metadata
+  page.tsx                 # Main dashboard page and app state orchestration
 
 src/
   components/
-    ApplicationCard.tsx   # Single application card with edit/delete actions
-    ApplicationForm.tsx   # Create and edit form
-    DashboardStats.tsx    # Summary cards
-    EmptyState.tsx        # Reusable empty-state component
-    Filters.tsx           # Search, filters, sorting and follow-up filter
+    ApplicationCard.tsx    # Single application card with edit/delete actions
+    ApplicationForm.tsx    # Create and edit form
+    AuthPanel.tsx          # Google sign-in/sign-out UI
+    DashboardStats.tsx     # Summary cards
+    EmptyState.tsx         # Reusable empty-state component
+    Filters.tsx            # Search, filters, sorting and follow-up filter
+
+  hooks/
+    useAuthUser.ts         # Firebase auth state listener
 
   lib/
-    firebase.ts           # Firebase client configuration
+    firebase.ts            # Firebase client configuration
 
   services/
-    application.service.ts # Firestore CRUD functions
+    application.service.ts # Firestore CRUD functions for applications
+    auth.service.ts        # Google sign-in and sign-out helpers
+    user.service.ts        # Firestore user profile upsert
 
   types/
-    application.ts        # Application model and labels
+    application.ts         # Application model, statuses and labels
+    userProfile.ts         # Firestore user profile model
 
   utils/
-    applicationStats.ts   # Dashboard stats calculation
-    followUp.ts           # Follow-up date helper
+    applicationStats.ts    # Dashboard stats calculation
+    followUp.ts            # Follow-up date helper
+
+firestore.rules            # Firestore security rules
 ```
 
 ## Data Model
+
+### Job Application
 
 ```ts
 type ApplicationStatus = "saved" | "applied" | "interview" | "rejected" | "offer";
@@ -127,23 +155,55 @@ type JobApplication = {
 };
 ```
 
+### User Profile
+
+```ts
+type UserProfile = {
+  id: string;
+  displayName: string;
+  email: string;
+  photoURL: string;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
 ## Firestore Structure
 
-Application documents are stored under a workspace:
+User profiles are stored as top-level user documents:
 
 ```txt
-workspaces/{workspaceId}/applications/{applicationId}
+users/{uid}
 ```
 
-The current workspace is configured with:
+Job applications are stored in a user-owned subcollection:
 
-```env
-NEXT_PUBLIC_FIREBASE_WORKSPACE_ID=default
+```txt
+users/{uid}/applications/{applicationId}
 ```
 
-This structure keeps the data model ready for a future React Native app or authentication-based workspaces.
+This keeps each user's data isolated and makes the same structure suitable for a future React Native app.
 
-## Firestore Service
+Example:
+
+```txt
+users/
+  firebaseUserUid/
+    displayName
+    email
+    photoURL
+    createdAt
+    updatedAt
+    applications/
+      applicationId/
+        company
+        position
+        status
+        appliedAt
+        followUpAt
+```
+
+## Firestore Service Layer
 
 Firestore access is isolated in:
 
@@ -153,14 +213,45 @@ src/services/application.service.ts
 
 The service exposes:
 
-- `getApplications`
-- `createApplication`
-- `updateApplication`
-- `deleteApplication`
+- `getApplications(userId)`
+- `createApplication(userId, application)`
+- `updateApplication(userId, application)`
+- `deleteApplication(userId, applicationId)`
 
-The page component uses these functions instead of calling Firebase directly from the UI. This keeps the data layer easier to replace or share with a future mobile app.
+The page component passes the authenticated Firebase user id into these functions. UI components do not call Firestore directly.
 
 Firestore does not accept `undefined` field values, so application data is cleaned before write operations.
+
+## Authentication Flow
+
+Authentication is handled with Firebase Authentication and Google sign-in.
+
+Flow:
+
+1. User clicks `Sign in with Google`.
+2. Firebase opens the Google sign-in popup.
+3. `useAuthUser` listens for the auth state change.
+4. The app stores the signed-in Firebase user in React state.
+5. `upsertUserProfile` creates or updates `users/{uid}` in Firestore.
+6. Applications are loaded from `users/{uid}/applications`.
+7. Signed-out users see a sign-in empty state and cannot manage applications.
+
+## Firestore Security Rules
+
+The project includes Firestore rules in:
+
+```txt
+firestore.rules
+```
+
+The rules are designed so that:
+
+- signed-out users cannot read or write data,
+- signed-in users can access only their own `users/{uid}` document,
+- signed-in users can access only their own `users/{uid}/applications` subcollection,
+- user profile documents cannot be deleted from the client.
+
+Rules must also be published in Firebase Console or deployed with Firebase CLI to affect the live database.
 
 ## Environment Variables
 
@@ -173,7 +264,6 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_FIREBASE_WORKSPACE_ID=default
 ```
 
 Firebase values can be copied from Firebase Console under project settings for the web app.
@@ -184,9 +274,11 @@ Firebase values can be copied from Firebase Console under project settings for t
 2. Add a web app in Firebase project settings.
 3. Copy the web app config into `.env.local`.
 4. Create a Firestore database.
-5. Use a workspace id such as `default` for local development.
+5. Enable Google sign-in in Firebase Authentication.
+6. Publish the Firestore rules from `firestore.rules`.
+7. Run the app locally and sign in with Google.
 
-For production, configure Firestore rules before sharing the app publicly.
+For deployment, add the production domain to Firebase Authentication authorized domains.
 
 ## Getting Started
 
@@ -219,16 +311,18 @@ npm run start
 
 ## Development Notes
 
-- The app is a client-side Next.js page because it uses interactive local React state and Firebase client SDK calls.
-- Form state is local to `ApplicationForm`; the applications list is owned by the page component.
-- The same form component is used for both creating and editing applications.
-- Firestore is treated as the source of truth; mock and localStorage persistence were removed after Firestore integration.
-- The current workspace id can later be replaced by an authenticated user id or team id.
+- The app is a client-side Next.js page because it uses interactive React state and Firebase client SDK calls.
+- Firebase config values prefixed with `NEXT_PUBLIC_` are exposed to the browser by design; access control is handled by Firebase Authentication and Firestore rules.
+- The applications list is owned by the page component.
+- `ApplicationForm` keeps local form state and is reused for both create and edit flows.
+- Firestore is treated as the source of truth.
+- Mock data and localStorage persistence were removed after Firestore integration.
+- The current Firestore structure can be reused by a future React Native app with the same Firebase project.
 
 ## Roadmap
 
-- Add authentication
-- Improve Firestore security rules
-- Add a React Native app using the same Firestore data model
+- Deploy the app
+- Add screenshots and a live demo link
+- Add a React Native companion app using the same Firebase data model
 - Add dashboard insights and status history
-- Add deployment link and screenshots
+- Add stronger profile management
