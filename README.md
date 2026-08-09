@@ -4,6 +4,12 @@ A responsive web application for tracking job applications from the first saved 
 
 The project is intentionally compact, but it is built like a real frontend product: typed data model, reusable components, Google authentication, user-scoped Firestore data, client-side filtering and sorting, loading states, empty states, error handling and action feedback.
 
+## Live Demo
+
+https://job-application-tracker-drab-delta.vercel.app/
+
+The live demo uses Google sign-in. Application data is stored per authenticated user in Firebase Firestore.
+
 ## Project Status
 
 This is a portfolio-focused frontend application built with Next.js and Firebase.
