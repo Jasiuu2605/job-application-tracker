@@ -49,6 +49,9 @@ export default function Home() {
   const [applicationsError, setApplicationsError] = useState('');
   const [applicationsSuccess, setApplicationsSuccess] = useState('');
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+
   useEffect(() => {
     if (isAuthLoading) {
       return;
@@ -240,11 +243,33 @@ export default function Home() {
     }
   }
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredApplications.length / pageSize),
+  );
+
+  const activePage = Math.min(currentPage, totalPages);
+  const startIndex = (activePage - 1) * pageSize;
+
+  const paginatedApplications = filteredApplications.slice(
+    startIndex,
+    startIndex + pageSize,
+  );
+
   const hasActiveFilters =
     statusFilter !== 'all' ||
     workModeFilter !== 'all' ||
     showDueFollowUps ||
     searchQuery.trim().length > 0;
+
+  function handlePageChange(page: number) {
+    setCurrentPage(page);
+
+    document.getElementById('applications-heading')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }
 
   return (
     <main className='min-h-screen bg-slate-50 text-slate-950'>
@@ -284,19 +309,33 @@ export default function Home() {
               workModeFilter={workModeFilter}
               sortOption={sortOption}
               showDueFollowUps={showDueFollowUps}
-              onSearchChange={setSearchQuery}
+              onSearchChange={(value) => {
+                setSearchQuery(value);
+                setCurrentPage(1);
+              }}
               onStatusChange={setStatusFilter}
-              onWorkModeChange={setWorkModeFilter}
+              onWorkModeChange={(value) => {
+                setWorkModeFilter(value);
+                setCurrentPage(1);
+              }}
               onSortChange={setSortOption}
-              onShowDueFollowUpsChange={setShowDueFollowUps}
+              onShowDueFollowUpsChange={(value) => {
+                setShowDueFollowUps(value);
+                setCurrentPage(1);
+              }}
             />
 
             <div className='flex items-center justify-between gap-4'>
-              <h2 className='text-xl font-semibold text-slate-950'>
+              <h2
+                id='applications-heading'
+                className='scroll-mt-6 text-xl font-semibold text-slate-950'
+              >
                 Applications
               </h2>
               <p className='text-sm text-slate-500'>
-                Showing {filteredApplications.length} of {applications.length}
+                Showing {filteredApplications.length === 0 ? 0 : startIndex + 1}
+                –{startIndex + paginatedApplications.length} of{' '}
+                {filteredApplications.length}
               </p>
             </div>
 
@@ -335,7 +374,7 @@ export default function Home() {
               />
             ) : !isLoadingApplications ? (
               <div className='grid gap-4'>
-                {filteredApplications.map((application) => (
+                {paginatedApplications.map((application) => (
                   <ApplicationCard
                     key={application.id}
                     application={application}
@@ -346,6 +385,55 @@ export default function Home() {
               </div>
             ) : null}
 
+            {!isLoadingApplications && totalPages > 1 && (
+              <nav
+                aria-label='Applications pagination'
+                className='flex flex-wrap items-center justify-center gap-4'
+              >
+                <button
+                  type='button'
+                  aria-label='Go to first page'
+                  title='First page'
+                  disabled={activePage === 1}
+                  onClick={() => handlePageChange(1)}
+                  className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  &laquo;
+                </button>
+                <button
+                  type='button'
+                  disabled={activePage === 1}
+                  onClick={() => handlePageChange(activePage - 1)}
+                  className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  Previous
+                </button>
+
+                <span className='text-sm text-slate-600'>
+                  Page {activePage} of {totalPages}
+                </span>
+
+                <button
+                  type='button'
+                  disabled={activePage === totalPages}
+                  onClick={() => handlePageChange(activePage + 1)}
+                  className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  Next
+                </button>
+                <button
+                  type='button'
+                  aria-label='Go to last page'
+                  title='Last page'
+                  disabled={activePage === totalPages}
+                  onClick={() => handlePageChange(totalPages)}
+                  className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  &raquo;
+                </button>
+              </nav>
+            )}
+
             {hasActiveFilters ? (
               <button
                 type='button'
@@ -353,6 +441,8 @@ export default function Home() {
                   setStatusFilter('all');
                   setWorkModeFilter('all');
                   setSearchQuery('');
+                  setShowDueFollowUps(false);
+                  setCurrentPage(1);
                 }}
                 className='w-fit rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-100'
               >
