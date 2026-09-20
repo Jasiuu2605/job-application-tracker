@@ -47,34 +47,47 @@ export function ApplicationCard({
         <div className='text-left text-sm text-slate-500 sm:text-right'>
           <p>Applied {formatDate(application.appliedAt)}</p>
           <p>{workModeLabels[application.workMode]}</p>
+          {application.followUpAt ? (
+            <p
+              className={
+                isFollowUpDue(application.followUpAt)
+                  ? 'font-medium text-amber-800'
+                  : ''
+              }
+            >
+              Follow-up: {formatFollowUp(application.followUpAt)}
+              {isFollowUpDue(application.followUpAt) ? ' · Due' : ''}
+            </p>
+          ) : null}
         </div>
       </div>
 
-      <dl className='mt-5 grid gap-3 text-sm sm:grid-cols-2'>
-        <Detail label='Location' value={application.location} />
-        <Detail
-          label='Salary'
-          value={application.salaryRange || 'Not specified'}
-        />
-        <Detail
-          label='Follow-up'
-          value={formatFollowUp(application.followUpAt)}
-        />
-        <Detail label='Source' value={application.source || 'Not specified'} />
-        <Detail label='Mode' value={workModeLabels[application.workMode]} />
-      </dl>
+      <details className='mt-4'>
+        <summary className='cursor-pointer text-sm font-medium text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600'>
+          Application details
+        </summary>
 
-      {isFollowUpDue(application.followUpAt) ? (
-        <div className='mt-5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800'>
-          Follow-up is due
-        </div>
-      ) : null}
+        <dl className='mt-5 grid gap-3 text-sm sm:grid-cols-2'>
+          <Detail label='Location' value={application.location} />
+          <Detail
+            label='Salary'
+            value={application.salaryRange || 'Not specified'}
+          />
 
-      {application.notes ? (
-        <div className='mt-5 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-600'>
-          {application.notes}
-        </div>
-      ) : null}
+          <Detail
+            label='Source'
+            value={application.source || 'Not specified'}
+          />
+          <Detail label='Mode' value={workModeLabels[application.workMode]} />
+        </dl>
+
+        {application.notes ? (
+          <div className='mt-5 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-600'>
+            {application.notes}
+          </div>
+        ) : null}
+      </details>
+
       <div className='mt-5 flex justify-end gap-2'>
         <button
           type='button'
@@ -134,4 +147,3 @@ function formatFollowUp(dateValue?: string) {
 
   return formatDate(dateValue);
 }
-
