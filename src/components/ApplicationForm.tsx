@@ -134,7 +134,7 @@ export function ApplicationForm({
   }
 
   return (
-    <aside className='rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6'>
+    <aside className='rounded-lg border border-slate-200 bg-white p-5 shadow-sm'>
       <h2 className='text-xl font-semibold text-slate-950'>
         {isEditing ? 'Edit application' : 'Add application'}
       </h2>
