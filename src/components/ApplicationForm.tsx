@@ -134,7 +134,7 @@ export function ApplicationForm({
   }
 
   return (
-    <aside className='rounded-lg border border-slate-200 bg-white p-5 shadow-sm'>
+    <aside className='bg-white px-6 pb-6 pt-2'>
       <h2 className='text-xl font-semibold text-slate-950'>
         {isEditing ? 'Edit application' : 'Add application'}
       </h2>
@@ -199,19 +199,20 @@ export function ApplicationForm({
             </select>
           </label>
         </div>
-
-        <TextField
-          label='Applied date'
-          type='date'
-          value={formState.appliedAt}
-          onChange={(value) => updateField('appliedAt', value)}
-        />
-        <TextField
-          label='Follow-up date'
-          type='date'
-          value={formState.followUpAt}
-          onChange={(value) => updateField('followUpAt', value)}
-        />
+        <div className='grid gap-4 sm:grid-cols-2'>
+          <TextField
+            label='Applied date'
+            type='date'
+            value={formState.appliedAt}
+            onChange={(value) => updateField('appliedAt', value)}
+          />
+          <TextField
+            label='Follow-up date'
+            type='date'
+            value={formState.followUpAt}
+            onChange={(value) => updateField('followUpAt', value)}
+          />
+        </div>
         <TextField
           label='Salary range'
           value={formState.salaryRange}

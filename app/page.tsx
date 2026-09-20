@@ -2,7 +2,7 @@
 
 import { AuthPanel } from '@/src/components/AuthPanel';
 import { useAuthUser } from '@/src/hooks/useAuthUser';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { ApplicationCard } from '@/src/components/ApplicationCard';
 import { ApplicationForm } from '@/src/components/ApplicationForm';
 import { DashboardStats } from '@/src/components/DashboardStats';
@@ -49,8 +49,23 @@ export default function Home() {
   const [applicationsError, setApplicationsError] = useState('');
   const [applicationsSuccess, setApplicationsSuccess] = useState('');
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const formDialogRef = useRef<HTMLDialogElement>(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
+
+  useEffect(() => {
+    const dialog = formDialogRef.current;
+
+    if (!dialog) return;
+
+    if (isFormOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isFormOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isFormOpen]);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -182,6 +197,7 @@ export default function Home() {
         ...currentApplications,
       ]);
       setApplicationsSuccess('Application saved to Firestore.');
+      formDialogRef.current?.close();
     } catch {
       setApplicationsSuccess('');
       setApplicationsError('Could not save application to Firestore.');
@@ -209,6 +225,7 @@ export default function Home() {
       );
       setEditingApplication(null);
       setApplicationsSuccess('Application updated in Firestore.');
+      formDialogRef.current?.close();
     } catch {
       setApplicationsSuccess('');
       setApplicationsError('Could not update application in Firestore.');
@@ -301,7 +318,7 @@ export default function Home() {
 
         <DashboardStats stats={stats} />
 
-        <section className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start'>
+        <section className='grid gap-6'>
           <div className='flex flex-col gap-5'>
             <Filters
               searchQuery={searchQuery}
@@ -332,6 +349,18 @@ export default function Home() {
               >
                 Applications
               </h2>
+              {user && (
+                <button
+                  type='button'
+                  onClick={() => {
+                    setEditingApplication(null);
+                    setIsFormOpen(true);
+                  }}
+                  className='rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800'
+                >
+                  Add application
+                </button>
+              )}
               <p className='text-sm text-slate-500'>
                 Showing {filteredApplications.length === 0 ? 0 : startIndex + 1}
                 –{startIndex + paginatedApplications.length} of{' '}
@@ -379,7 +408,10 @@ export default function Home() {
                     key={application.id}
                     application={application}
                     onDelete={handleDeleteApplication}
-                    onEdit={setEditingApplication}
+                    onEdit={(application) => {
+                      setEditingApplication(application);
+                      setIsFormOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -452,12 +484,37 @@ export default function Home() {
           </div>
 
           {user ? (
-            <ApplicationForm
-              editingApplication={editingApplication}
-              onAddApplication={handleAddApplication}
-              onUpdateApplication={handleUpdateApplication}
-              onCancelEdit={() => setEditingApplication(null)}
-            />
+            isFormOpen && (
+              <dialog
+                ref={formDialogRef}
+                onClose={() => {
+                  setIsFormOpen(false);
+                  setEditingApplication(null);
+                }}
+                aria-label={
+                  editingApplication ? 'Edit application' : 'Add application'
+                }
+                className='fixed inset-0 m-auto h-dvh max-h-dvh w-full max-w-none overflow-y-auto border-0 bg-white p-0 backdrop:bg-black/40 sm:h-auto sm:max-h-[90dvh] sm:max-w-[720px] sm:rounded-lg'
+              >
+                <div className='flex justify-end px-4 pt-4'>
+                  <button
+                    type='button'
+                    aria-label='Close application form'
+                    title='Close'
+                    onClick={() => formDialogRef.current?.close()}
+                    className='flex h-10 w-10 items-center justify-center rounded-md text-2xl text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
+                  >
+                    &times;
+                  </button>
+                </div>
+                <ApplicationForm
+                  editingApplication={editingApplication}
+                  onAddApplication={handleAddApplication}
+                  onUpdateApplication={handleUpdateApplication}
+                  onCancelEdit={() => formDialogRef.current?.close()}
+                />
+              </dialog>
+            )
           ) : (
             <aside className='rounded-lg border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-500 shadow-sm lg:sticky lg:top-6'>
               Sign in with Google to add and manage job applications.
