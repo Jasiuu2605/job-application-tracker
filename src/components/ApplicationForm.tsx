@@ -135,9 +135,6 @@ export function ApplicationForm({
 
   return (
     <aside className='bg-white px-6 pb-6 pt-2'>
-      <h2 className='text-xl font-semibold text-slate-950'>
-        {isEditing ? 'Edit application' : 'Add application'}
-      </h2>
       <p className='mt-2 text-sm leading-6 text-slate-500'>
         {isEditing
           ? 'Update the details and save your changes.'

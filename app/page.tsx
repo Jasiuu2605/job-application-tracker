@@ -491,12 +491,19 @@ export default function Home() {
                   setIsFormOpen(false);
                   setEditingApplication(null);
                 }}
-                aria-label={
-                  editingApplication ? 'Edit application' : 'Add application'
-                }
+                aria-labelledby='application-dialog-title'
                 className='fixed inset-0 m-auto h-dvh max-h-dvh w-full max-w-none overflow-y-auto border-0 bg-white p-0 backdrop:bg-black/40 sm:h-auto sm:max-h-[90dvh] sm:max-w-[720px] sm:rounded-lg'
               >
-                <div className='flex justify-end px-4 pt-4'>
+                <div className='flex items-center justify-between gap-4 px-6 pt-4'>
+                  <h2
+                    id='application-dialog-title'
+                    className='text-xl font-semibold text-slate-950'
+                  >
+                    {editingApplication
+                      ? 'Edit application'
+                      : 'Add application'}
+                  </h2>
+
                   <button
                     type='button'
                     aria-label='Close application form'
