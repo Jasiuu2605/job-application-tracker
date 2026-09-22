@@ -13,7 +13,9 @@ export function useAuthUser() {
       setIsAuthLoading(false);
 
       if (currentUser) {
-        void upsertUserProfile(currentUser);
+        upsertUserProfile(currentUser).catch((error: unknown) => {
+          console.error('Could not save user profile:', error);
+        });
       }
     });
 
