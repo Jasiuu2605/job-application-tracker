@@ -2,12 +2,15 @@
 
 import { AuthPanel } from '@/src/components/AuthPanel';
 import { useAuthUser } from '@/src/hooks/useAuthUser';
+
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { ApplicationCard } from '@/src/components/ApplicationCard';
 import { ApplicationForm } from '@/src/components/ApplicationForm';
 import { DashboardStats } from '@/src/components/DashboardStats';
 import { EmptyState } from '@/src/components/EmptyState';
 import { Filters } from '@/src/components/Filters';
+import { Pagination } from '@/src/components/Pagination';
+
 import type {
   JobApplication,
   ApplicationStatus,
@@ -418,52 +421,11 @@ export default function Home() {
             ) : null}
 
             {!isLoadingApplications && totalPages > 1 && (
-              <nav
-                aria-label='Applications pagination'
-                className='flex flex-wrap items-center justify-center gap-4'
-              >
-                <button
-                  type='button'
-                  aria-label='Go to first page'
-                  title='First page'
-                  disabled={activePage === 1}
-                  onClick={() => handlePageChange(1)}
-                  className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
-                >
-                  &laquo;
-                </button>
-                <button
-                  type='button'
-                  disabled={activePage === 1}
-                  onClick={() => handlePageChange(activePage - 1)}
-                  className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
-                >
-                  Previous
-                </button>
-
-                <span className='text-sm text-slate-600'>
-                  Page {activePage} of {totalPages}
-                </span>
-
-                <button
-                  type='button'
-                  disabled={activePage === totalPages}
-                  onClick={() => handlePageChange(activePage + 1)}
-                  className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
-                >
-                  Next
-                </button>
-                <button
-                  type='button'
-                  aria-label='Go to last page'
-                  title='Last page'
-                  disabled={activePage === totalPages}
-                  onClick={() => handlePageChange(totalPages)}
-                  className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
-                >
-                  &raquo;
-                </button>
-              </nav>
+              <Pagination
+                currentPage={activePage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             )}
 
             {hasActiveFilters ? (
