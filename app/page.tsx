@@ -3,9 +3,10 @@
 import { AuthPanel } from '@/src/components/AuthPanel';
 import { useAuthUser } from '@/src/hooks/useAuthUser';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ApplicationCard } from '@/src/components/ApplicationCard';
 import { ApplicationForm } from '@/src/components/ApplicationForm';
+import { ApplicationFormDialog } from '@/src/components/ApplicationFormDialog';
 import { DashboardStats } from '@/src/components/DashboardStats';
 import { EmptyState } from '@/src/components/EmptyState';
 import { Filters } from '@/src/components/Filters';
@@ -53,22 +54,9 @@ export default function Home() {
   const [applicationsSuccess, setApplicationsSuccess] = useState('');
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const formDialogRef = useRef<HTMLDialogElement>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
-
-  useEffect(() => {
-    const dialog = formDialogRef.current;
-
-    if (!dialog) return;
-
-    if (isFormOpen && !dialog.open) {
-      dialog.showModal();
-    } else if (!isFormOpen && dialog.open) {
-      dialog.close();
-    }
-  }, [isFormOpen]);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -200,7 +188,8 @@ export default function Home() {
         ...currentApplications,
       ]);
       setApplicationsSuccess('Application saved to Firestore.');
-      formDialogRef.current?.close();
+      setIsFormOpen(false);
+      setEditingApplication(null);
     } catch {
       setApplicationsSuccess('');
       setApplicationsError('Could not save application to Firestore.');
@@ -228,7 +217,8 @@ export default function Home() {
       );
       setEditingApplication(null);
       setApplicationsSuccess('Application updated in Firestore.');
-      formDialogRef.current?.close();
+      setIsFormOpen(false);
+      setEditingApplication(null);
     } catch {
       setApplicationsSuccess('');
       setApplicationsError('Could not update application in Firestore.');
@@ -447,42 +437,26 @@ export default function Home() {
 
           {user ? (
             isFormOpen && (
-              <dialog
-                ref={formDialogRef}
+              <ApplicationFormDialog
+                isOpen={isFormOpen}
+                title={
+                  editingApplication ? 'Edit application' : 'Add application'
+                }
                 onClose={() => {
                   setIsFormOpen(false);
                   setEditingApplication(null);
                 }}
-                aria-labelledby='application-dialog-title'
-                className='fixed inset-0 m-auto h-dvh max-h-dvh w-full max-w-none overflow-y-auto border-0 bg-white p-0 backdrop:bg-black/40 sm:h-auto sm:max-h-[90dvh] sm:max-w-[720px] sm:rounded-lg'
               >
-                <div className='flex items-center justify-between gap-4 px-6 pt-4'>
-                  <h2
-                    id='application-dialog-title'
-                    className='text-xl font-semibold text-slate-950'
-                  >
-                    {editingApplication
-                      ? 'Edit application'
-                      : 'Add application'}
-                  </h2>
-
-                  <button
-                    type='button'
-                    aria-label='Close application form'
-                    title='Close'
-                    onClick={() => formDialogRef.current?.close()}
-                    className='flex h-10 w-10 items-center justify-center rounded-md text-2xl text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
-                  >
-                    &times;
-                  </button>
-                </div>
                 <ApplicationForm
                   editingApplication={editingApplication}
                   onAddApplication={handleAddApplication}
                   onUpdateApplication={handleUpdateApplication}
-                  onCancelEdit={() => formDialogRef.current?.close()}
+                  onCancelEdit={() => {
+                    setIsFormOpen(false);
+                    setEditingApplication(null);
+                  }}
                 />
-              </dialog>
+              </ApplicationFormDialog>
             )
           ) : (
             <aside className='rounded-lg border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-500 shadow-sm lg:sticky lg:top-6'>
