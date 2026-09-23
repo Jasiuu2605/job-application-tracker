@@ -24,7 +24,6 @@ import { useApplications } from '@/src/hooks/useApplications';
 
 import {
   deleteApplication,
-  updateApplication,
 } from '@/src/services/application.service';
 
 type StatusFilter = ApplicationStatus | 'all';
@@ -62,6 +61,7 @@ export default function Home() {
     applicationsSuccess,
     setApplicationsSuccess,
     addApplication,
+    editApplication,
   } = useApplications(user?.uid ?? null, isAuthLoading);
 
   const filteredApplications = useMemo(() => {
@@ -138,31 +138,11 @@ export default function Home() {
   }
 
   async function handleUpdateApplication(updatedApplication: JobApplication) {
-    try {
-      setApplicationsError('');
-      setApplicationsSuccess('');
+    const wasSaved = await editApplication(updatedApplication);
 
-      if (!user) {
-        setApplicationsError('Sign in to update applications.');
-        return;
-      }
-
-      await updateApplication(user.uid, updatedApplication);
-
-      setApplications((currentApplications) =>
-        currentApplications.map((application) =>
-          application.id === updatedApplication.id
-            ? updatedApplication
-            : application,
-        ),
-      );
-      setEditingApplication(null);
-      setApplicationsSuccess('Application updated in Firestore.');
+    if (wasSaved) {
       setIsFormOpen(false);
       setEditingApplication(null);
-    } catch {
-      setApplicationsSuccess('');
-      setApplicationsError('Could not update application in Firestore.');
     }
   }
 

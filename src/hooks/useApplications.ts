@@ -5,6 +5,7 @@ import type { JobApplication } from '@/src/types/application';
 import {
   createApplication,
   getApplications,
+  updateApplication,
 } from '@/src/services/application.service';
 
 export function useApplications(userId: string | null, isAuthLoading: boolean) {
@@ -85,8 +86,39 @@ export function useApplications(userId: string | null, isAuthLoading: boolean) {
     }
   }
 
+  async function editApplication(
+    updatedApplication: JobApplication,
+  ): Promise<boolean> {
+    setApplicationsError('');
+    setApplicationsSuccess('');
+
+    if (!userId) {
+      setApplicationsError('Sign in to update applications.');
+      return false;
+    }
+
+    try {
+      await updateApplication(userId, updatedApplication);
+
+      setApplications((currentApplications) =>
+        currentApplications.map((application) =>
+          application.id === updatedApplication.id
+            ? updatedApplication
+            : application,
+        ),
+      );
+
+      setApplicationsSuccess('Application updated in Firestore.');
+      return true;
+    } catch {
+      setApplicationsError('Could not update application in Firestore.');
+      return false;
+    }
+  }
+
   return {
     addApplication,
+    editApplication,
     applications,
     setApplications,
     isLoadingApplications,
