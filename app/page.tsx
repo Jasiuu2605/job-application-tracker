@@ -3,7 +3,7 @@
 import { AuthPanel } from '@/src/components/AuthPanel';
 import { useAuthUser } from '@/src/hooks/useAuthUser';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ApplicationCard } from '@/src/components/ApplicationCard';
 import { ApplicationForm } from '@/src/components/ApplicationForm';
 import { ApplicationFormDialog } from '@/src/components/ApplicationFormDialog';
@@ -25,7 +25,6 @@ import { useApplications } from '@/src/hooks/useApplications';
 import {
   createApplication,
   deleteApplication,
-  getApplications,
   updateApplication,
 } from '@/src/services/application.service';
 
@@ -59,56 +58,11 @@ export default function Home() {
     applications,
     setApplications,
     isLoadingApplications,
-    setIsLoadingApplications,
     applicationsError,
     setApplicationsError,
     applicationsSuccess,
     setApplicationsSuccess,
-  } = useApplications();
-
-  useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
-
-    if (!user) {
-      const timeoutId = window.setTimeout(() => {
-        setApplications([]);
-        setIsLoadingApplications(false);
-      }, 0);
-
-      return () => window.clearTimeout(timeoutId);
-    }
-
-    const userId = user.uid;
-
-    async function loadFirestoreApplications() {
-      try {
-        setIsLoadingApplications(true);
-        setApplicationsError('');
-        setApplicationsSuccess('');
-
-        const firestoreApplications = await getApplications(userId);
-
-        setApplications(firestoreApplications);
-      } catch {
-        setApplicationsError('Could not load applications from Firestore.');
-        setApplications([]);
-        setApplicationsSuccess('');
-      } finally {
-        setIsLoadingApplications(false);
-      }
-    }
-
-    void loadFirestoreApplications();
-  }, [
-    isAuthLoading,
-    user,
-    setApplications,
-    setApplicationsError,
-    setApplicationsSuccess,
-    setIsLoadingApplications,
-  ]);
+  } = useApplications(user?.uid ?? null, isAuthLoading);
 
   const filteredApplications = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
