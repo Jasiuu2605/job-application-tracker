@@ -23,7 +23,6 @@ import { isFollowUpDue } from '@/src/utils/followUp';
 import { useApplications } from '@/src/hooks/useApplications';
 
 import {
-  createApplication,
   deleteApplication,
   updateApplication,
 } from '@/src/services/application.service';
@@ -62,6 +61,7 @@ export default function Home() {
     setApplicationsError,
     applicationsSuccess,
     setApplicationsSuccess,
+    addApplication,
   } = useApplications(user?.uid ?? null, isAuthLoading);
 
   const filteredApplications = useMemo(() => {
@@ -129,27 +129,11 @@ export default function Home() {
   );
 
   async function handleAddApplication(application: JobApplication) {
-    try {
-      setApplicationsError('');
-      setApplicationsSuccess('');
+    const wasSaved = await addApplication(application);
 
-      if (!user) {
-        setApplicationsError('Sign in to save applications.');
-        return;
-      }
-
-      await createApplication(user.uid, application);
-
-      setApplications((currentApplications) => [
-        application,
-        ...currentApplications,
-      ]);
-      setApplicationsSuccess('Application saved to Firestore.');
+    if (wasSaved) {
       setIsFormOpen(false);
       setEditingApplication(null);
-    } catch {
-      setApplicationsSuccess('');
-      setApplicationsError('Could not save application to Firestore.');
     }
   }
 

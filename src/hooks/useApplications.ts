@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
+
 import type { JobApplication } from '@/src/types/application';
-import { getApplications } from '@/src/services/application.service';
+
+import {
+  createApplication,
+  getApplications,
+} from '@/src/services/application.service';
 
 export function useApplications(userId: string | null, isAuthLoading: boolean) {
   const [applications, setApplications] = useState<JobApplication[]>([]);
@@ -56,7 +61,32 @@ export function useApplications(userId: string | null, isAuthLoading: boolean) {
     return () => window.clearTimeout(timeoutId);
   }, [applicationsSuccess]);
 
+  async function addApplication(application: JobApplication): Promise<boolean> {
+    setApplicationsError('');
+    setApplicationsSuccess('');
+
+    if (!userId) {
+      setApplicationsError('Sign in to save applications.');
+      return false;
+    }
+
+    try {
+      await createApplication(userId, application);
+
+      setApplications((currentApplications) => [
+        application,
+        ...currentApplications,
+      ]);
+      setApplicationsSuccess('Application saved to Firestore.');
+      return true;
+    } catch {
+      setApplicationsError('Could not save application to Firestore.');
+      return false;
+    }
+  }
+
   return {
+    addApplication,
     applications,
     setApplications,
     isLoadingApplications,
