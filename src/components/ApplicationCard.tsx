@@ -26,49 +26,80 @@ export function ApplicationCard({
   onDelete,
   onEdit,
 }: ApplicationCardProps) {
+  const followUpDue = isFollowUpDue(application.followUpAt);
+
   return (
-    <article className='rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md'>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-        <div>
+    <article className='min-w-0 rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300 focus-within:border-teal-600 sm:px-5'>
+      <div className='grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center lg:gap-x-6'>
+        <div className='min-w-0'>
           <div className='flex flex-wrap items-center gap-2'>
-            <h3 className='text-lg font-semibold text-slate-950'>
+            <h3 className='min-w-0 text-base font-semibold text-slate-950 [overflow-wrap:anywhere]'>
               {application.company}
             </h3>
             <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${statusStyles[application.status]}`}
+              className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${statusStyles[application.status]}`}
             >
               {statusLabels[application.status]}
             </span>
           </div>
-          <p className='mt-1 text-base font-medium text-slate-700'>
+          <p className='mt-1 text-sm text-slate-600 [overflow-wrap:anywhere]'>
             {application.position}
           </p>
         </div>
-        <div className='text-left text-sm text-slate-500 sm:text-right'>
-          <p>Applied {formatDate(application.appliedAt)}</p>
-          <p>{workModeLabels[application.workMode]}</p>
+        <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-5 text-slate-500 lg:flex-col lg:items-end'>
+          <p>
+            <span>Applied {formatDate(application.appliedAt)}</span>
+            <span aria-hidden='true' className='mx-2 text-slate-300'>/</span>
+            <span>{workModeLabels[application.workMode]}</span>
+          </p>
           {application.followUpAt ? (
             <p
               className={
-                isFollowUpDue(application.followUpAt)
-                  ? 'font-medium text-amber-800'
+                followUpDue
+                  ? 'rounded bg-amber-50 px-2 font-medium text-amber-800'
                   : ''
               }
             >
               Follow-up: {formatFollowUp(application.followUpAt)}
-              {isFollowUpDue(application.followUpAt) ? ' · Due' : ''}
+              {followUpDue ? ' · Due' : ''}
             </p>
           ) : null}
         </div>
+        <div className='flex items-center gap-2 lg:border-l lg:border-slate-200 lg:pl-5'>
+          <button
+            type='button'
+            aria-label={`Edit application for ${application.company}`}
+            onClick={() => onEdit(application)}
+            className='min-h-11 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
+          >
+            Edit
+          </button>
+          <button
+            type='button'
+            aria-label={`Delete application for ${application.company}`}
+            onClick={() => {
+              const shouldDelete = window.confirm(
+                `Delete application for ${application.company}?`,
+              );
+
+              if (shouldDelete) {
+                onDelete(application.id);
+              }
+            }}
+            className='min-h-11 rounded-md px-3 text-sm font-medium text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600'
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
-      <details className='mt-4'>
-        <summary className='cursor-pointer text-sm font-medium text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600'>
+      <details className='application-details group mt-1'>
+        <summary className='w-fit cursor-pointer rounded py-2 text-xs font-medium text-slate-500 transition-colors marker:text-slate-400 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 group-open:text-teal-700'>
           Application details
         </summary>
 
-        <dl className='mt-5 grid gap-3 text-sm sm:grid-cols-2'>
-          <Detail label='Location' value={application.location} />
+        <dl className='mt-1 grid gap-x-6 gap-y-4 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4'>
+          <Detail label='Location' value={application.location || 'Not specified'} />
           <Detail
             label='Salary'
             value={application.salaryRange || 'Not specified'}
@@ -82,48 +113,26 @@ export function ApplicationCard({
         </dl>
 
         {application.notes ? (
-          <div className='mt-5 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-600'>
-            {application.notes}
+          <div className='mt-4 border-t border-slate-100 pb-2 pt-4'>
+            <h4 className='text-xs font-medium text-slate-500'>Notes</h4>
+            <p className='mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700 [overflow-wrap:anywhere]'>
+              {application.notes}
+            </p>
           </div>
         ) : null}
       </details>
 
-      <div className='mt-5 flex justify-end gap-2'>
-        <button
-          type='button'
-          onClick={() => onEdit(application)}
-          className='rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50'
-        >
-          Edit
-        </button>
-
-        <button
-          type='button'
-          onClick={() => {
-            const shouldDelete = window.confirm(
-              `Delete application for ${application.company}?`,
-            );
-
-            if (shouldDelete) {
-              onDelete(application.id);
-            }
-          }}
-          className='rounded-md border border-rose-200 bg-white px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-50'
-        >
-          Delete
-        </button>
-      </div>
     </article>
   );
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className='text-xs font-semibold uppercase tracking-wide text-slate-400'>
+    <div className='min-w-0'>
+      <dt className='text-xs font-medium text-slate-500'>
         {label}
       </dt>
-      <dd className='mt-1 text-slate-700'>{value}</dd>
+      <dd className='mt-1 text-slate-700 [overflow-wrap:anywhere]'>{value}</dd>
     </div>
   );
 }

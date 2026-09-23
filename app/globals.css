@@ -17,3 +17,30 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@supports (interpolate-size: allow-keywords) and selector(::details-content) and (transition-behavior: allow-discrete) {
+  .application-details {
+    interpolate-size: allow-keywords;
+  }
+
+  .application-details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      block-size 0.2s ease,
+      opacity 0.2s ease,
+      content-visibility 0.2s allow-discrete;
+  }
+
+  .application-details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .application-details::details-content {
+      transition: none;
+    }
+  }
+}
