@@ -6,6 +6,7 @@ import {
   createApplication,
   getApplications,
   updateApplication,
+  deleteApplication,
 } from '@/src/services/application.service';
 
 export function useApplications(userId: string | null, isAuthLoading: boolean) {
@@ -116,16 +117,39 @@ export function useApplications(userId: string | null, isAuthLoading: boolean) {
     }
   }
 
+  async function removeApplication(applicationId: string): Promise<boolean> {
+    setApplicationsError('');
+    setApplicationsSuccess('');
+
+    if (!userId) {
+      setApplicationsError('Sign in to delete applications.');
+      return false;
+    }
+
+    try {
+      await deleteApplication(userId, applicationId);
+
+      setApplications((currentApplications) =>
+        currentApplications.filter(
+          (application) => application.id !== applicationId,
+        ),
+      );
+
+      setApplicationsSuccess('Application deleted from Firestore.');
+      return true;
+    } catch {
+      setApplicationsError('Could not delete application from Firestore.');
+      return false;
+    }
+  }
+
   return {
     addApplication,
     editApplication,
+    removeApplication,
     applications,
-    setApplications,
     isLoadingApplications,
-    setIsLoadingApplications,
     applicationsError,
-    setApplicationsError,
     applicationsSuccess,
-    setApplicationsSuccess,
   };
 }

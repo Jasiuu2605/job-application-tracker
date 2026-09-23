@@ -22,10 +22,6 @@ import { isFollowUpDue } from '@/src/utils/followUp';
 
 import { useApplications } from '@/src/hooks/useApplications';
 
-import {
-  deleteApplication,
-} from '@/src/services/application.service';
-
 type StatusFilter = ApplicationStatus | 'all';
 type WorkModeFilter = WorkMode | 'all';
 type SortOption =
@@ -54,14 +50,12 @@ export default function Home() {
 
   const {
     applications,
-    setApplications,
     isLoadingApplications,
     applicationsError,
-    setApplicationsError,
     applicationsSuccess,
-    setApplicationsSuccess,
     addApplication,
     editApplication,
+    removeApplication,
   } = useApplications(user?.uid ?? null, isAuthLoading);
 
   const filteredApplications = useMemo(() => {
@@ -147,30 +141,12 @@ export default function Home() {
   }
 
   async function handleDeleteApplication(applicationId: string) {
-    try {
-      setApplicationsError('');
-      setApplicationsSuccess('');
+    const wasDeleted = await removeApplication(applicationId);
 
-      if (!user) {
-        setApplicationsError('Sign in to delete applications.');
-        return;
-      }
-
-      await deleteApplication(user.uid, applicationId);
-
-      setApplications((currentApplications) =>
-        currentApplications.filter(
-          (application) => application.id !== applicationId,
-        ),
-      );
-
+    if (wasDeleted) {
       setEditingApplication((currentApplication) =>
         currentApplication?.id === applicationId ? null : currentApplication,
       );
-      setApplicationsSuccess('Application deleted from Firestore.');
-    } catch {
-      setApplicationsSuccess('');
-      setApplicationsError('Could not delete application from Firestore.');
     }
   }
 
