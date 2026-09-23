@@ -20,6 +20,8 @@ import type {
 import { calculateApplicationStats } from '@/src/utils/applicationStats';
 import { isFollowUpDue } from '@/src/utils/followUp';
 
+import { useApplications } from '@/src/hooks/useApplications';
+
 import {
   createApplication,
   deleteApplication,
@@ -39,7 +41,6 @@ type SortOption =
 export default function Home() {
   const { user, isAuthLoading } = useAuthUser();
 
-  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [editingApplication, setEditingApplication] =
     useState<JobApplication | null>(null);
 
@@ -49,14 +50,21 @@ export default function Home() {
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [showDueFollowUps, setShowDueFollowUps] = useState(false);
 
-  const [isLoadingApplications, setIsLoadingApplications] = useState(true);
-  const [applicationsError, setApplicationsError] = useState('');
-  const [applicationsSuccess, setApplicationsSuccess] = useState('');
-
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
+
+  const {
+    applications,
+    setApplications,
+    isLoadingApplications,
+    setIsLoadingApplications,
+    applicationsError,
+    setApplicationsError,
+    applicationsSuccess,
+    setApplicationsSuccess,
+  } = useApplications();
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -93,19 +101,14 @@ export default function Home() {
     }
 
     void loadFirestoreApplications();
-  }, [isAuthLoading, user]);
-
-  useEffect(() => {
-    if (!applicationsSuccess) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setApplicationsSuccess('');
-    }, 3000);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [applicationsSuccess]);
+  }, [
+    isAuthLoading,
+    user,
+    setApplications,
+    setApplicationsError,
+    setApplicationsSuccess,
+    setIsLoadingApplications,
+  ]);
 
   const filteredApplications = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
