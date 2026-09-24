@@ -6,8 +6,13 @@ import { AuthProvider } from '@/src/context/AuthProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Job Application Tracker',
-  description: 'A simple client-side tracker for job applications.',
+  title: {
+    default: 'Job Application Tracker',
+    template: '%s | Job Application Tracker',
+  },
+  applicationName: 'Job Application Tracker',
+  description:
+    'Organize your job search in one place. Track applications, interviews and offers, keep recruitment notes, and plan your next follow-up.',
 };
 
 export default function RootLayout({
