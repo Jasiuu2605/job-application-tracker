@@ -1,367 +1,307 @@
-'use client';
-
-import { AuthPanel } from '@/src/components/AuthPanel';
+import Image from 'next/image';
+import Link from 'next/link';
 import { ThemeSwitcher } from '@/src/components/ThemeSwitcher';
-import { useAuth } from '@/src/hooks/useAuth';
+import { TrackerPreview } from '@/src/components/TrackerPreview';
 
-import { useMemo, useState } from 'react';
-import { ApplicationCard } from '@/src/components/ApplicationCard';
-import { ApplicationForm } from '@/src/components/ApplicationForm';
-import { ApplicationFormDialog } from '@/src/components/ApplicationFormDialog';
-import { DashboardStats } from '@/src/components/DashboardStats';
-import { EmptyState } from '@/src/components/EmptyState';
-import { Filters } from '@/src/components/Filters';
-import { Pagination } from '@/src/components/Pagination';
+const features = [
+  {
+    number: '01',
+    title: 'Keep the whole picture.',
+    description:
+      'Company, role, salary, source and your own notes. Keep the details together so you can pick up exactly where you left off.',
+    tag: 'Everything in one place',
+    tone: 'text-accent',
+  },
+  {
+    number: '02',
+    title: 'Know where you stand.',
+    description:
+      'From a saved opportunity to an offer. Update your status as things move forward, then filter the list to focus on what matters today.',
+    tag: 'Five recruitment statuses',
+    tone: 'text-interview-text',
+  },
+  {
+    number: '03',
+    title: 'Remember the next step.',
+    description:
+      'Set a follow-up date and find applications that need your attention. Your notes are right there when it is time to get back in touch.',
+    tag: 'Follow-ups and notes',
+    tone: 'text-warning-text',
+  },
+];
 
-import type {
-  JobApplication,
-  ApplicationStatus,
-  WorkMode,
-} from '@/src/types/application';
-import { calculateApplicationStats } from '@/src/utils/applicationStats';
-import { isFollowUpDue } from '@/src/utils/followUp';
+const questions = [
+  {
+    question: 'Do I need an account?',
+    answer:
+      'Yes. Sign in with Google to save and manage your applications. Your entries are connected to your account, so you can return to them on another device.',
+  },
+  {
+    question: 'Can other users see my applications?',
+    answer:
+      'Each account has its own application list. Access rules restrict users to their own entries; signing in with another account does not reveal your list.',
+  },
+  {
+    question: 'Does the tracker send applications or follow-up emails?',
+    answer:
+      'No. You submit applications and contact companies yourself. The tracker records your progress and highlights follow-up dates inside the app; it does not send email reminders.',
+  },
+  {
+    question: 'Can I use it on my phone?',
+    answer:
+      'Yes. The tracker works in your browser on desktop and mobile, with light, dark and system themes. Sign in with the same Google account to access your saved entries.',
+  },
+];
 
-import { useApplications } from '@/src/hooks/useApplications';
+const primaryLink =
+  'inline-flex min-h-11 items-center justify-center rounded-md bg-accent px-5 py-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent';
 
-type StatusFilter = ApplicationStatus | 'all';
-type WorkModeFilter = WorkMode | 'all';
-type SortOption =
-  | 'newest'
-  | 'oldest'
-  | 'company-asc'
-  | 'company-desc'
-  | 'status';
-
-export default function Home() {
-  const { user, isAuthLoading } = useAuth();
-
-  const [editingApplication, setEditingApplication] =
-    useState<JobApplication | null>(null);
-
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [workModeFilter, setWorkModeFilter] = useState<WorkModeFilter>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState<SortOption>('newest');
-  const [showDueFollowUps, setShowDueFollowUps] = useState(false);
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20;
-
-  const {
-    applications,
-    isLoadingApplications,
-    applicationsError,
-    applicationsSuccess,
-    addApplication,
-    editApplication,
-    removeApplication,
-  } = useApplications(user?.uid ?? null, isAuthLoading);
-
-  const filteredApplications = useMemo(() => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
-
-    const filtered = applications.filter((application) => {
-      const matchesStatus =
-        statusFilter === 'all' || application.status === statusFilter;
-      const matchesWorkMode =
-        workModeFilter === 'all' || application.workMode === workModeFilter;
-      const matchesSearch =
-        normalizedSearch.length === 0 ||
-        application.company.toLowerCase().includes(normalizedSearch) ||
-        application.position.toLowerCase().includes(normalizedSearch);
-
-      const matchesFollowUp =
-        !showDueFollowUps || isFollowUpDue(application.followUpAt);
-
-      return (
-        matchesStatus && matchesWorkMode && matchesSearch && matchesFollowUp
-      );
-    });
-
-    return [...filtered].sort((firstApplication, secondApplication) => {
-      if (sortOption === 'newest') {
-        return (
-          new Date(secondApplication.appliedAt).getTime() -
-          new Date(firstApplication.appliedAt).getTime()
-        );
-      }
-
-      if (sortOption === 'oldest') {
-        return (
-          new Date(firstApplication.appliedAt).getTime() -
-          new Date(secondApplication.appliedAt).getTime()
-        );
-      }
-
-      if (sortOption === 'company-asc') {
-        return firstApplication.company.localeCompare(
-          secondApplication.company,
-        );
-      }
-
-      if (sortOption === 'company-desc') {
-        return secondApplication.company.localeCompare(
-          firstApplication.company,
-        );
-      }
-
-      return firstApplication.status.localeCompare(secondApplication.status);
-    });
-  }, [
-    applications,
-    searchQuery,
-    showDueFollowUps,
-    sortOption,
-    statusFilter,
-    workModeFilter,
-  ]);
-
-  const stats = useMemo(
-    () => calculateApplicationStats(applications),
-    [applications],
-  );
-
-  async function handleAddApplication(application: JobApplication) {
-    const wasSaved = await addApplication(application);
-
-    if (wasSaved) {
-      setIsFormOpen(false);
-      setEditingApplication(null);
-    }
-  }
-
-  async function handleUpdateApplication(updatedApplication: JobApplication) {
-    const wasSaved = await editApplication(updatedApplication);
-
-    if (wasSaved) {
-      setIsFormOpen(false);
-      setEditingApplication(null);
-    }
-  }
-
-  async function handleDeleteApplication(applicationId: string) {
-    const wasDeleted = await removeApplication(applicationId);
-
-    if (wasDeleted) {
-      setEditingApplication((currentApplication) =>
-        currentApplication?.id === applicationId ? null : currentApplication,
-      );
-    }
-  }
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredApplications.length / pageSize),
-  );
-
-  const activePage = Math.min(currentPage, totalPages);
-  const startIndex = (activePage - 1) * pageSize;
-
-  const paginatedApplications = filteredApplications.slice(
-    startIndex,
-    startIndex + pageSize,
-  );
-
-  const hasActiveFilters =
-    statusFilter !== 'all' ||
-    workModeFilter !== 'all' ||
-    showDueFollowUps ||
-    searchQuery.trim().length > 0;
-
-  function handlePageChange(page: number) {
-    setCurrentPage(page);
-
-    document.getElementById('applications-heading')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  }
-
+export default function AboutPage() {
   return (
-    <main className='min-h-screen bg-canvas text-ink'>
-      <div className='mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8'>
-        <header className='flex flex-col gap-6 border-b border-line pb-6 lg:flex-row lg:items-start lg:justify-between'>
-          <div className='min-w-0'>
-            <p className='text-sm font-medium text-accent'>Portfolio project</p>
-            <h1 className='mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl'>
+    <div className='min-h-screen bg-canvas text-ink'>
+      <a
+        href='#about-content'
+        className='sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:p-3 focus:text-ink'
+      >
+        Skip to content
+      </a>
+      <header className='border-b border-line bg-surface'>
+        <nav
+          aria-label='Main navigation'
+          className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8'
+        >
+          <Link href='/' className='text-sm font-semibold text-ink'>
+            <span
+              className='mr-2 inline-flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs text-on-accent'
+              aria-hidden='true'
+            >
+              JT
+            </span>
+            Job Application Tracker
+          </Link>
+          <div className='flex flex-wrap items-center gap-4 sm:gap-6'>
+            <a href='#features' className='text-sm text-muted hover:text-ink'>
+              Features
+            </a>
+            <a href='#questions' className='text-sm text-muted hover:text-ink'>
+              FAQ
+            </a>
+            <ThemeSwitcher />
+          </div>
+        </nav>
+      </header>
+
+      <main id='about-content'>
+        <section className='relative isolate overflow-hidden bg-zinc-950 text-white'>
+          <Image
+            src='https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=2000&q=85'
+            alt=''
+            fill
+            unoptimized
+            preload
+            sizes='100vw'
+            className='-z-20 object-cover object-center'
+          />
+          <div className='absolute inset-0 -z-10 bg-black/75' />
+          <div className='mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16'>
+            <p className='mb-4 text-sm font-medium text-teal-200'>
+              A little more order. A little less guesswork.
+            </p>
+            <h1 className='max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl'>
               Job Application Tracker
             </h1>
-            <p className='mt-3 max-w-2xl text-base leading-7 text-muted'>
-              Track where you applied, what happened next, and which
-              opportunities need follow-up.
+            <p className='mt-5 max-w-xl text-base leading-7 text-zinc-200 sm:text-lg'>
+              Your job search has enough moving parts. Keep your applications,
+              interviews and next steps together, from the first send to the
+              final offer.
+            </p>
+            <div className='mt-7 flex flex-wrap items-center gap-5'>
+              <Link
+                href='/dashboard'
+                className='inline-flex min-h-11 items-center justify-center rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-teal-950 transition-colors hover:bg-teal-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-200'
+              >
+                Open tracker{' '}
+                <span aria-hidden='true' className='ml-3'>
+                  &rarr;
+                </span>
+              </Link>
+              <a
+                href='#preview'
+                className='text-sm font-medium text-white underline decoration-white/40 underline-offset-4 hover:decoration-white'
+              >
+                Take a look inside
+              </a>
+            </div>
+            <p className='mt-5 text-xs text-zinc-300'>
+              Google sign-in. Your own application list. Available in your
+              browser.
             </p>
           </div>
-          <div className='flex min-w-0 flex-col items-start gap-3 lg:items-end'>
-            <ThemeSwitcher />
-            <AuthPanel />
+        </section>
 
-            <div className='rounded-lg border border-line bg-surface px-4 py-3 text-sm text-muted shadow-sm'>
-              <span className='font-semibold text-ink'>
-                {applications.length}
-              </span>{' '}
-              saved applications
-            </div>
-          </div>
-        </header>
-
-        <DashboardStats stats={stats} />
-
-        <section className='grid gap-6'>
-          <div className='flex flex-col gap-5'>
-            <Filters
-              searchQuery={searchQuery}
-              statusFilter={statusFilter}
-              workModeFilter={workModeFilter}
-              sortOption={sortOption}
-              showDueFollowUps={showDueFollowUps}
-              onSearchChange={(value) => {
-                setSearchQuery(value);
-                setCurrentPage(1);
-              }}
-              onStatusChange={setStatusFilter}
-              onWorkModeChange={(value) => {
-                setWorkModeFilter(value);
-                setCurrentPage(1);
-              }}
-              onSortChange={setSortOption}
-              onShowDueFollowUpsChange={(value) => {
-                setShowDueFollowUps(value);
-                setCurrentPage(1);
-              }}
-            />
-
-            <div className='flex items-center justify-between gap-4'>
-              <h2
-                id='applications-heading'
-                className='scroll-mt-6 text-xl font-semibold text-ink'
-              >
-                Applications
-              </h2>
-              {user && (
-                <button
-                  type='button'
-                  onClick={() => {
-                    setEditingApplication(null);
-                    setIsFormOpen(true);
-                  }}
-                  className='rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary transition hover:bg-primary-hover'
+        <section
+          id='preview'
+          aria-labelledby='preview-title'
+          className='scroll-mt-6 border-b border-line'
+        >
+          <div className='mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14'>
+            <div className='mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end'>
+              <div>
+                <p className='text-xs font-semibold uppercase text-accent'>
+                  Less searching. More clarity.
+                </p>
+                <h2
+                  id='preview-title'
+                  className='mt-2 text-2xl font-semibold sm:text-3xl'
                 >
-                  Add application
-                </button>
-              )}
-              <p className='text-sm text-muted'>
-                Showing {filteredApplications.length === 0 ? 0 : startIndex + 1}
-                –{startIndex + paginatedApplications.length} of{' '}
-                {filteredApplications.length}
+                  Every opportunity, accounted for.
+                </h2>
+              </div>
+              <p className='max-w-sm text-sm leading-6 text-muted'>
+                A quick overview when you need it. The details when you want
+                them.
               </p>
             </div>
-
-            {applicationsError ? (
-              <div className='rounded-md border border-danger-line bg-danger-soft px-4 py-3 text-sm font-medium text-danger-text'>
-                {applicationsError}
-              </div>
-            ) : null}
-
-            {applicationsSuccess ? (
-              <div className='rounded-md border border-success-line bg-success-soft px-4 py-3 text-sm font-medium text-success-text'>
-                {applicationsSuccess}
-              </div>
-            ) : null}
-
-            {isLoadingApplications ? (
-              <div className='rounded-lg border border-line bg-surface p-6 text-sm text-muted shadow-sm'>
-                Loading applications...
-              </div>
-            ) : null}
-
-            {!isAuthLoading && !user ? (
-              <EmptyState
-                title='Sign in to view applications'
-                description='Use Google sign-in to load and manage your saved job applications.'
-              />
-            ) : !isLoadingApplications && applications.length === 0 ? (
-              <EmptyState
-                title='No applications in Firestore yet'
-                description='Add your first job application and it will be saved to your Firebase workspace.'
-              />
-            ) : !isLoadingApplications && filteredApplications.length === 0 ? (
-              <EmptyState
-                title='No matches found'
-                description='Try changing the filters or search text to see more applications.'
-              />
-            ) : !isLoadingApplications ? (
-              <div className='grid gap-4'>
-                {paginatedApplications.map((application) => (
-                  <ApplicationCard
-                    key={application.id}
-                    application={application}
-                    onDelete={handleDeleteApplication}
-                    onEdit={(application) => {
-                      setEditingApplication(application);
-                      setIsFormOpen(true);
-                    }}
-                  />
-                ))}
-              </div>
-            ) : null}
-
-            {!isLoadingApplications && totalPages > 1 && (
-              <Pagination
-                currentPage={activePage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            )}
-
-            {hasActiveFilters ? (
-              <button
-                type='button'
-                onClick={() => {
-                  setStatusFilter('all');
-                  setWorkModeFilter('all');
-                  setSearchQuery('');
-                  setShowDueFollowUps(false);
-                  setCurrentPage(1);
-                }}
-                className='w-fit rounded-md border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-secondary shadow-sm transition hover:border-faint hover:bg-subtle'
-              >
-                Clear filters
-              </button>
-            ) : null}
+            <TrackerPreview />
           </div>
-
-          {user ? (
-            isFormOpen && (
-              <ApplicationFormDialog
-                isOpen={isFormOpen}
-                title={
-                  editingApplication ? 'Edit application' : 'Add application'
-                }
-                onClose={() => {
-                  setIsFormOpen(false);
-                  setEditingApplication(null);
-                }}
-              >
-                <ApplicationForm
-                  editingApplication={editingApplication}
-                  onAddApplication={handleAddApplication}
-                  onUpdateApplication={handleUpdateApplication}
-                  onCancelEdit={() => {
-                    setIsFormOpen(false);
-                    setEditingApplication(null);
-                  }}
-                />
-              </ApplicationFormDialog>
-            )
-          ) : (
-            <aside className='rounded-lg border border-line bg-surface p-5 text-sm leading-6 text-muted shadow-sm lg:sticky lg:top-6'>
-              Sign in with Google to add and manage job applications.
-            </aside>
-          )}
         </section>
-      </div>
-    </main>
+
+        <section
+          id='features'
+          aria-labelledby='features-title'
+          className='scroll-mt-6 bg-surface'
+        >
+          <div className='mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16'>
+            <h2
+              id='features-title'
+              className='text-2xl font-semibold sm:text-3xl'
+            >
+              Built around your next move.
+            </h2>
+            <div className='mt-8 grid gap-8 md:grid-cols-3 md:gap-10'>
+              {features.map((feature) => (
+                <div key={feature.number} className='border-t border-line pt-5'>
+                  <span className={`font-mono text-sm ${feature.tone}`}>
+                    {feature.number}
+                  </span>
+                  <h3 className='mt-4 text-lg font-semibold'>
+                    {feature.title}
+                  </h3>
+                  <p className='mt-3 text-sm leading-7 text-muted'>
+                    {feature.description}
+                  </p>
+                  <p className={`mt-5 text-xs font-medium ${feature.tone}`}>
+                    {feature.tag}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section
+          aria-labelledby='workflow-title'
+          className='border-y border-line bg-accent-soft'
+        >
+          <div className='mx-auto max-w-6xl px-5 py-12 sm:px-8'>
+            <p className='text-xs font-semibold uppercase text-accent'>
+              A simple routine
+            </p>
+            <h2 id='workflow-title' className='mt-2 text-2xl font-semibold'>
+              Send. Save. Stay on top of it.
+            </h2>
+            <ol className='mt-8 grid gap-6 md:grid-cols-3'>
+              {[
+                [
+                  'Save the opportunity',
+                  'Add the company, role and the details worth remembering.',
+                ],
+                [
+                  'Track the conversation',
+                  'Update the status and keep notes as the recruitment moves forward.',
+                ],
+                [
+                  'Plan your follow-up',
+                  'Choose a date, then return to the entries that need attention.',
+                ],
+              ].map(([title, description], index) => (
+                <li key={title} className='flex gap-4'>
+                  <span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent-line text-sm font-semibold text-accent'>
+                    {index + 1}
+                  </span>
+                  <div>
+                    <h3 className='text-sm font-semibold'>{title}</h3>
+                    <p className='mt-2 text-sm leading-6 text-muted'>
+                      {description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section
+          id='questions'
+          aria-labelledby='questions-title'
+          className='scroll-mt-6'
+        >
+          <div className='mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:px-8 sm:py-16 md:grid-cols-[1fr_2fr] md:gap-16'>
+            <div>
+              <h2 id='questions-title' className='text-2xl font-semibold'>
+                Before you start.
+              </h2>
+              <p className='mt-3 text-sm leading-6 text-muted'>
+                A few things you might want to know.
+              </p>
+            </div>
+            <div className='min-w-0 divide-y divide-line border-y border-line'>
+              {questions.map(({ question, answer }) => (
+                <details key={question} className='application-details py-1'>
+                  <summary className='cursor-pointer py-4 pr-3 text-sm font-semibold marker:text-accent focus-visible:outline-2 focus-visible:outline-accent'>
+                    {question}
+                  </summary>
+                  <p className='pb-5 text-sm leading-7 text-muted'>{answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className='border-t border-line bg-surface'>
+          <div className='mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-5 py-10 sm:flex-row sm:items-center sm:px-8'>
+            <div>
+              <h2 className='text-2xl font-semibold'>
+                Make room for your next opportunity.
+              </h2>
+              <p className='mt-2 text-sm text-muted'>
+                Start with the application you sent today.
+              </p>
+            </div>
+            <Link href='/dashboard' className={`${primaryLink} shrink-0`}>
+              Open tracker{' '}
+              <span aria-hidden='true' className='ml-3'>
+                &rarr;
+              </span>
+            </Link>
+          </div>
+        </section>
+      </main>
+
+      <footer className='border-t border-line'>
+        <div className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-6 text-xs text-muted sm:px-8'>
+          <span>Job Application Tracker</span>
+          <div className='flex flex-wrap gap-5'>
+            <a
+              href='https://github.com/Jasiu2605/job-application-tracker'
+              className='hover:text-ink'
+            >
+              Source on GitHub <span aria-hidden='true'>&nearr;</span>
+            </a>
+            <span>Workspace photo: Unsplash</span>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
