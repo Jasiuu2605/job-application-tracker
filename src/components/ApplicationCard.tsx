@@ -14,11 +14,11 @@ type ApplicationCardProps = {
 };
 
 const statusStyles: Record<ApplicationStatus, string> = {
-  saved: 'bg-slate-100 text-slate-700 ring-slate-200',
-  applied: 'bg-blue-100 text-blue-700 ring-blue-200',
-  interview: 'bg-sky-100 text-sky-700 ring-sky-200',
-  rejected: 'bg-rose-100 text-rose-700 ring-rose-200',
-  offer: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+  saved: 'bg-subtle text-secondary ring-line',
+  applied: 'bg-info-soft text-info-text ring-info-line',
+  interview: 'bg-interview-soft text-interview-text ring-interview-line',
+  rejected: 'bg-danger-soft text-danger-text ring-danger-line',
+  offer: 'bg-success-soft text-success-text ring-success-line',
 };
 
 export function ApplicationCard({
@@ -29,11 +29,11 @@ export function ApplicationCard({
   const followUpDue = isFollowUpDue(application.followUpAt);
 
   return (
-    <article className='min-w-0 rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300 focus-within:border-teal-600 sm:px-5'>
+    <article className='min-w-0 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-line-strong focus-within:border-accent sm:px-5'>
       <div className='grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center lg:gap-x-6'>
         <div className='min-w-0'>
           <div className='flex flex-wrap items-center gap-2'>
-            <h3 className='min-w-0 text-base font-semibold text-slate-950 [overflow-wrap:anywhere]'>
+            <h3 className='min-w-0 text-base font-semibold text-ink [overflow-wrap:anywhere]'>
               {application.company}
             </h3>
             <span
@@ -42,21 +42,21 @@ export function ApplicationCard({
               {statusLabels[application.status]}
             </span>
           </div>
-          <p className='mt-1 text-sm text-slate-600 [overflow-wrap:anywhere]'>
+          <p className='mt-1 text-sm text-muted [overflow-wrap:anywhere]'>
             {application.position}
           </p>
         </div>
-        <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-5 text-slate-500 lg:flex-col lg:items-end'>
+        <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-5 text-muted lg:flex-col lg:items-end'>
           <p>
             <span>Applied {formatDate(application.appliedAt)}</span>
-            <span aria-hidden='true' className='mx-2 text-slate-300'>/</span>
+            <span aria-hidden='true' className='mx-2 text-faint'>/</span>
             <span>{workModeLabels[application.workMode]}</span>
           </p>
           {application.followUpAt ? (
             <p
               className={
                 followUpDue
-                  ? 'rounded bg-amber-50 px-2 font-medium text-amber-800'
+                  ? 'rounded bg-warning-soft px-2 font-medium text-warning-text'
                   : ''
               }
             >
@@ -65,12 +65,12 @@ export function ApplicationCard({
             </p>
           ) : null}
         </div>
-        <div className='flex items-center gap-2 lg:border-l lg:border-slate-200 lg:pl-5'>
+        <div className='flex items-center gap-2 lg:border-l lg:border-line lg:pl-5'>
           <button
             type='button'
             aria-label={`Edit application for ${application.company}`}
             onClick={() => onEdit(application)}
-            className='min-h-11 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
+            className='min-h-11 rounded-md border border-line px-3 text-sm font-medium text-secondary transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
           >
             Edit
           </button>
@@ -86,7 +86,7 @@ export function ApplicationCard({
                 onDelete(application.id);
               }
             }}
-            className='min-h-11 rounded-md px-3 text-sm font-medium text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600'
+            className='min-h-11 rounded-md px-3 text-sm font-medium text-muted transition-colors hover:bg-danger-soft hover:text-danger-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger-text'
           >
             Delete
           </button>
@@ -94,11 +94,11 @@ export function ApplicationCard({
       </div>
 
       <details className='application-details group mt-1'>
-        <summary className='w-fit cursor-pointer rounded py-2 text-xs font-medium text-slate-500 transition-colors marker:text-slate-400 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 group-open:text-teal-700'>
+        <summary className='w-fit cursor-pointer rounded py-2 text-xs font-medium text-muted transition-colors marker:text-faint hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent group-open:text-accent'>
           Application details
         </summary>
 
-        <dl className='mt-1 grid gap-x-6 gap-y-4 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4'>
+        <dl className='mt-1 grid gap-x-6 gap-y-4 border-t border-line-soft pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4'>
           <Detail label='Location' value={application.location || 'Not specified'} />
           <Detail
             label='Salary'
@@ -113,9 +113,9 @@ export function ApplicationCard({
         </dl>
 
         {application.notes ? (
-          <div className='mt-4 border-t border-slate-100 pb-2 pt-4'>
-            <h4 className='text-xs font-medium text-slate-500'>Notes</h4>
-            <p className='mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700 [overflow-wrap:anywhere]'>
+          <div className='mt-4 border-t border-line-soft pb-2 pt-4'>
+            <h4 className='text-xs font-medium text-muted'>Notes</h4>
+            <p className='mt-1 whitespace-pre-wrap text-sm leading-6 text-secondary [overflow-wrap:anywhere]'>
               {application.notes}
             </p>
           </div>
@@ -129,10 +129,10 @@ export function ApplicationCard({
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className='min-w-0'>
-      <dt className='text-xs font-medium text-slate-500'>
+      <dt className='text-xs font-medium text-muted'>
         {label}
       </dt>
-      <dd className='mt-1 text-slate-700 [overflow-wrap:anywhere]'>{value}</dd>
+      <dd className='mt-1 text-secondary [overflow-wrap:anywhere]'>{value}</dd>
     </div>
   );
 }

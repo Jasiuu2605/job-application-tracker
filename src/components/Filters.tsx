@@ -42,27 +42,27 @@ export function Filters({
   onShowDueFollowUpsChange,
 }: FiltersProps) {
   return (
-    <section className='rounded-lg border border-slate-200 bg-white p-4 shadow-sm'>
+    <section className='rounded-lg border border-line bg-surface p-4 shadow-sm'>
       <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_180px_180px]'>
-        <label className='flex flex-col gap-2 text-sm font-medium text-slate-700'>
+        <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
           Search
           <input
             type='search'
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder='Company or position'
-            className='h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+            className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent-ring'
           />
         </label>
 
-        <label className='flex flex-col gap-2 text-sm font-medium text-slate-700'>
+        <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
           Status
           <select
             value={statusFilter}
             onChange={(event) =>
               onStatusChange(event.target.value as StatusFilter)
             }
-            className='h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+            className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
           >
             <option value='all'>All statuses</option>
             {applicationStatuses.map((status) => (
@@ -73,14 +73,14 @@ export function Filters({
           </select>
         </label>
 
-        <label className='flex flex-col gap-2 text-sm font-medium text-slate-700'>
+        <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
           Work mode
           <select
             value={workModeFilter}
             onChange={(event) =>
               onWorkModeChange(event.target.value as WorkModeFilter)
             }
-            className='h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+            className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
           >
             <option value='all'>All modes</option>
             {workModes.map((mode) => (
@@ -90,12 +90,12 @@ export function Filters({
             ))}
           </select>
         </label>
-        <label className='flex flex-col gap-2 text-sm font-medium text-slate-700'>
+        <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
           Sort by
           <select
             value={sortOption}
             onChange={(event) => onSortChange(event.target.value as SortOption)}
-            className='h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+            className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
           >
             <option value='newest'>Newest first</option>
             <option value='oldest'>Oldest first</option>
@@ -105,12 +105,12 @@ export function Filters({
           </select>
         </label>
       </div>
-      <label className='mt-4 flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-700'>
+      <label className='mt-4 flex items-center gap-3 rounded-md border border-line bg-canvas px-3 py-3 text-sm font-medium text-secondary'>
         <input
           type='checkbox'
           checked={showDueFollowUps}
           onChange={(event) => onShowDueFollowUpsChange(event.target.checked)}
-          className='h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600'
+          className='h-4 w-4 rounded border-line-strong text-accent focus:ring-accent'
         />
         Show only due follow-ups
       </label>

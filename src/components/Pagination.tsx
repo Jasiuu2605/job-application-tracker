@@ -20,7 +20,7 @@ export function Pagination({
         title='First page'
         disabled={currentPage === 1}
         onClick={() => onPageChange(1)}
-        className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+        className='rounded-md border border-line-strong px-3 py-2 text-sm font-medium hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50'
       >
         &laquo;
       </button>
@@ -28,12 +28,12 @@ export function Pagination({
         type='button'
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+        className='rounded-md border border-line-strong px-3 py-2 text-sm font-medium hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50'
       >
         Previous
       </button>
 
-      <span className='text-sm text-slate-600'>
+      <span className='text-sm text-muted'>
         Page {currentPage} of {totalPages}
       </span>
 
@@ -41,7 +41,7 @@ export function Pagination({
         type='button'
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+        className='rounded-md border border-line-strong px-3 py-2 text-sm font-medium hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50'
       >
         Next
       </button>
@@ -51,7 +51,7 @@ export function Pagination({
         title='Last page'
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(totalPages)}
-        className='rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+        className='rounded-md border border-line-strong px-3 py-2 text-sm font-medium hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50'
       >
         &raquo;
       </button>

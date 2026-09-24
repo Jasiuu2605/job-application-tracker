@@ -34,17 +34,17 @@ export function ApplicationFormDialog({
       ref={dialogRef}
       aria-label={title}
       onClose={onClose}
-      className='fixed inset-0 m-auto h-dvh max-h-dvh w-full max-w-none overflow-y-auto border-0 bg-white p-0 backdrop:bg-black/40 sm:h-auto sm:max-h-[90dvh] sm:max-w-[720px] sm:rounded-lg'
+      className='fixed inset-0 m-auto h-dvh max-h-dvh w-full max-w-none overflow-y-auto border-0 bg-surface p-0 backdrop:bg-black/40 sm:h-auto sm:max-h-[90dvh] sm:max-w-[720px] sm:rounded-lg'
     >
       <div className='flex items-center justify-between gap-4 px-6 pt-4'>
-        <h2 className='text-xl font-semibold text-slate-950'>{title}</h2>
+        <h2 className='text-xl font-semibold text-ink'>{title}</h2>
 
         <button
           type='button'
           aria-label='Close application form'
           title='Close'
           onClick={() => dialogRef.current?.close()}
-          className='flex h-10 w-10 items-center justify-center rounded-md text-2xl text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
+          className='flex h-10 w-10 items-center justify-center rounded-md text-2xl text-muted hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
         >
           &times;
         </button>

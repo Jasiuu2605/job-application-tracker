@@ -8,22 +8,22 @@ const statCards = [
   {
     label: "Total applications",
     key: "total",
-    tone: "border-slate-200 bg-white text-slate-950",
+    tone: "border-line bg-surface text-ink",
   },
   {
     label: "Interviews",
     key: "interviews",
-    tone: "border-sky-200 bg-sky-50 text-sky-950",
+    tone: "border-interview-line bg-interview-soft text-interview-text",
   },
   {
     label: "Rejected",
     key: "rejected",
-    tone: "border-rose-200 bg-rose-50 text-rose-950",
+    tone: "border-danger-line bg-danger-soft text-danger-text",
   },
   {
     label: "Offers",
     key: "offers",
-    tone: "border-emerald-200 bg-emerald-50 text-emerald-950",
+    tone: "border-success-line bg-success-soft text-success-text",
   },
 ] as const;
 

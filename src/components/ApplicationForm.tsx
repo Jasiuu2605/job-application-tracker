@@ -134,8 +134,8 @@ export function ApplicationForm({
   }
 
   return (
-    <aside className='bg-white px-6 pb-6 pt-2'>
-      <p className='mt-2 text-sm leading-6 text-slate-500'>
+    <aside className='bg-surface px-6 pb-6 pt-2'>
+      <p className='mt-2 text-sm leading-6 text-muted'>
         {isEditing
           ? 'Update the details and save your changes.'
           : 'Keep the essential details in one place so every next step is visible.'}
@@ -161,14 +161,14 @@ export function ApplicationForm({
         />
 
         <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2'>
-          <label className='flex flex-col gap-2 text-sm font-medium text-slate-700'>
+          <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
             Work mode
             <select
               value={formState.workMode}
               onChange={(event) =>
                 updateField('workMode', event.target.value as WorkMode)
               }
-              className='h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+              className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
             >
               {workModes.map((mode) => (
                 <option key={mode} value={mode}>
@@ -178,14 +178,14 @@ export function ApplicationForm({
             </select>
           </label>
 
-          <label className='flex flex-col gap-2 text-sm font-medium text-slate-700'>
+          <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
             Status
             <select
               value={formState.status}
               onChange={(event) =>
                 updateField('status', event.target.value as ApplicationStatus)
               }
-              className='h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+              className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
               required
             >
               {applicationStatuses.map((status) => (
@@ -223,25 +223,25 @@ export function ApplicationForm({
           placeholder='LinkedIn, referral, company page'
         />
 
-        <label className='flex flex-col gap-2 text-sm font-medium text-slate-700'>
+        <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
           Notes
           <textarea
             value={formState.notes}
             onChange={(event) => updateField('notes', event.target.value)}
             rows={4}
-            className='rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+            className='rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent-ring'
             placeholder='Response details, follow-up date, next steps'
           />
         </label>
 
         {error ? (
-          <p className='text-sm font-medium text-rose-600'>{error}</p>
+          <p className='text-sm font-medium text-danger-text'>{error}</p>
         ) : null}
 
         <div className='mt-1 flex flex-col gap-2 sm:flex-row'>
           <button
             type='submit'
-            className='rounded-md bg-teal-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-200'
+            className='rounded-md bg-accent px-4 py-3 text-sm font-semibold text-on-accent shadow-sm transition hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent-ring'
           >
             {isEditing ? 'Save changes' : 'Add application'}
           </button>
@@ -250,7 +250,7 @@ export function ApplicationForm({
             <button
               type='button'
               onClick={onCancelEdit}
-              className='rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50'
+              className='rounded-md border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-secondary shadow-sm transition hover:bg-canvas'
             >
               Cancel
             </button>
@@ -277,7 +277,7 @@ function TextField({
   required?: boolean;
 }) {
   return (
-    <label className='flex flex-col gap-2 text-sm font-medium text-slate-700'>
+    <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
       {label}
       <input
         type={type}
@@ -285,7 +285,7 @@ function TextField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         required={required}
-        className='h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+        className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent-ring'
       />
     </label>
   );
