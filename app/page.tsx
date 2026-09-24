@@ -2,7 +2,7 @@
 
 import { AuthPanel } from '@/src/components/AuthPanel';
 import { ThemeSwitcher } from '@/src/components/ThemeSwitcher';
-import { useAuthUser } from '@/src/hooks/useAuthUser';
+import { useAuth } from '@/src/hooks/useAuth';
 
 import { useMemo, useState } from 'react';
 import { ApplicationCard } from '@/src/components/ApplicationCard';
@@ -33,7 +33,7 @@ type SortOption =
   | 'status';
 
 export default function Home() {
-  const { user, isAuthLoading } = useAuthUser();
+  const { user, isAuthLoading } = useAuth();
 
   const [editingApplication, setEditingApplication] =
     useState<JobApplication | null>(null);
@@ -184,9 +184,7 @@ export default function Home() {
       <div className='mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8'>
         <header className='flex flex-col gap-6 border-b border-line pb-6 lg:flex-row lg:items-start lg:justify-between'>
           <div className='min-w-0'>
-            <p className='text-sm font-medium text-accent'>
-              Portfolio project
-            </p>
+            <p className='text-sm font-medium text-accent'>Portfolio project</p>
             <h1 className='mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl'>
               Job Application Tracker
             </h1>
@@ -197,7 +195,7 @@ export default function Home() {
           </div>
           <div className='flex min-w-0 flex-col items-start gap-3 lg:items-end'>
             <ThemeSwitcher />
-            <AuthPanel user={user} isAuthLoading={isAuthLoading} />
+            <AuthPanel />
 
             <div className='rounded-lg border border-line bg-surface px-4 py-3 text-sm text-muted shadow-sm'>
               <span className='font-semibold text-ink'>

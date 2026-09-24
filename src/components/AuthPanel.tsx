@@ -1,12 +1,8 @@
-import type { User } from 'firebase/auth';
 import { signInWithGoogle, signOutUser } from '@/src/services/auth.service';
+import { useAuth } from '../hooks/useAuth';
 
-type AuthPanelProps = {
-  user: User | null;
-  isAuthLoading: boolean;
-};
-
-export function AuthPanel({ user, isAuthLoading }: AuthPanelProps) {
+export function AuthPanel() {
+  const { user, isAuthLoading } = useAuth();
   if (isAuthLoading) {
     return (
       <div className='rounded-lg border border-line bg-surface px-4 py-3 text-sm text-muted shadow-sm'>
