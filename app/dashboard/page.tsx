@@ -13,6 +13,7 @@ import { DashboardStats } from '@/src/components/DashboardStats';
 import { EmptyState } from '@/src/components/EmptyState';
 import { Filters } from '@/src/components/Filters';
 import { Pagination } from '@/src/components/Pagination';
+import { DeleteApplicationDialog } from '@/src/components/DeleteApplicationDialog';
 
 import type {
   JobApplication,
@@ -38,6 +39,11 @@ export default function Home() {
 
   const [editingApplication, setEditingApplication] =
     useState<JobApplication | null>(null);
+
+  const [applicationToDelete, setApplicationToDelete] =
+    useState<JobApplication | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [workModeFilter, setWorkModeFilter] = useState<WorkModeFilter>('all');
@@ -142,13 +148,30 @@ export default function Home() {
     }
   }
 
-  async function handleDeleteApplication(applicationId: string) {
-    const wasDeleted = await removeApplication(applicationId);
+  async function handleDeleteApplication() {
+    if (!applicationToDelete || isDeleting) return;
 
-    if (wasDeleted) {
+    const applicationId = applicationToDelete.id;
+
+    setIsDeleting(true);
+    setDeleteError('');
+
+    try {
+      const wasDeleted = await removeApplication(applicationId);
+
+      if (!wasDeleted) {
+        setDeleteError('Could not delete application. Please try again.');
+        return;
+      }
+
       setEditingApplication((currentApplication) =>
         currentApplication?.id === applicationId ? null : currentApplication,
       );
+      setApplicationToDelete(null);
+    } catch {
+      setDeleteError('Could not delete application. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -303,7 +326,7 @@ export default function Home() {
                   <ApplicationCard
                     key={application.id}
                     application={application}
-                    onDelete={handleDeleteApplication}
+                    onDelete={() => setApplicationToDelete(application)}
                     onEdit={(application) => {
                       setEditingApplication(application);
                       setIsFormOpen(true);
@@ -368,6 +391,18 @@ export default function Home() {
           )}
         </section>
       </div>
+      <DeleteApplicationDialog
+        application={applicationToDelete}
+        isDeleting={isDeleting}
+        error={deleteError}
+        onCancel={() => {
+          if (isDeleting) return;
+
+          setApplicationToDelete(null);
+          setDeleteError('');
+        }}
+        onConfirm={handleDeleteApplication}
+      />
     </main>
   );
 }

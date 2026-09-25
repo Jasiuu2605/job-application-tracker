@@ -49,7 +49,9 @@ export function ApplicationCard({
         <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-5 text-muted lg:flex-col lg:items-end'>
           <p>
             <span>Applied {formatDate(application.appliedAt)}</span>
-            <span aria-hidden='true' className='mx-2 text-faint'>/</span>
+            <span aria-hidden='true' className='mx-2 text-faint'>
+              /
+            </span>
             <span>{workModeLabels[application.workMode]}</span>
           </p>
           {application.followUpAt ? (
@@ -77,15 +79,7 @@ export function ApplicationCard({
           <button
             type='button'
             aria-label={`Delete application for ${application.company}`}
-            onClick={() => {
-              const shouldDelete = window.confirm(
-                `Delete application for ${application.company}?`,
-              );
-
-              if (shouldDelete) {
-                onDelete(application.id);
-              }
-            }}
+            onClick={() => onDelete(application.id)}
             className='min-h-11 rounded-md px-3 text-sm font-medium text-muted transition-colors hover:bg-danger-soft hover:text-danger-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger-text'
           >
             Delete
@@ -99,7 +93,10 @@ export function ApplicationCard({
         </summary>
 
         <dl className='mt-1 grid gap-x-6 gap-y-4 border-t border-line-soft pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4'>
-          <Detail label='Location' value={application.location || 'Not specified'} />
+          <Detail
+            label='Location'
+            value={application.location || 'Not specified'}
+          />
           <Detail
             label='Salary'
             value={application.salaryRange || 'Not specified'}
@@ -121,7 +118,6 @@ export function ApplicationCard({
           </div>
         ) : null}
       </details>
-
     </article>
   );
 }
@@ -129,9 +125,7 @@ export function ApplicationCard({
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className='min-w-0'>
-      <dt className='text-xs font-medium text-muted'>
-        {label}
-      </dt>
+      <dt className='text-xs font-medium text-muted'>{label}</dt>
       <dd className='mt-1 text-secondary [overflow-wrap:anywhere]'>{value}</dd>
     </div>
   );
