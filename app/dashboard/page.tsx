@@ -53,6 +53,9 @@ export default function Home() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 
@@ -203,6 +206,51 @@ export default function Home() {
     });
   }
 
+  async function handleExportApllications() {
+    if (isExporting) return;
+
+    if (!user) {
+      setExportError('Sign in to export applications.');
+      return;
+    }
+
+    setIsExporting(true);
+    setExportError('');
+
+    try {
+      const token = await user.getIdToken();
+
+      const response = await fetch('/api/applications/export', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Export request failed.');
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'job-applications.csv';
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => {
+        URL.revokeObjectURL(downloadUrl);
+      }, 1000);
+    } catch {
+      setExportError('Could not export applications. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   return (
     <main className='min-h-screen bg-canvas text-ink'>
       <div className='mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8'>
@@ -286,6 +334,26 @@ export default function Home() {
                 {filteredApplications.length}
               </p>
             </div>
+
+            {user && (
+              <button
+                type='button'
+                onClick={handleExportApllications}
+                disabled={isExporting}
+                className='min-h-11 w-fit rounded-md border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-secondary hover:bg-subtle disabled:cursor-wait disabled:opacity-50'
+              >
+                {isExporting ? 'Exporting...' : 'Export CSV'}
+              </button>
+            )}
+
+            {exportError && (
+              <p
+                role='alert'
+                className='rounded-md border border-danger-line bg-danger-soft px-4 py-3 text-sm text-danger-text'
+              >
+                {exportError}
+              </p>
+            )}
 
             {applicationsError ? (
               <div className='rounded-md border border-danger-line bg-danger-soft px-4 py-3 text-sm font-medium text-danger-text'>
