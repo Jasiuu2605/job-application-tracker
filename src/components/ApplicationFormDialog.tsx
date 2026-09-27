@@ -5,10 +5,12 @@ type ApplicationFormDialogProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  isSaving: boolean;
 };
 
 export function ApplicationFormDialog({
   isOpen,
+  isSaving,
   title,
   onClose,
   children,
@@ -29,6 +31,25 @@ export function ApplicationFormDialog({
     return () => {};
   }, [isOpen]);
 
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    dialog.setAttribute('closedby', isSaving ? 'none' : 'closerequest');
+
+    function handleCancel(event: Event) {
+      if (isSaving) {
+        event.preventDefault();
+      }
+    }
+
+    dialog.addEventListener('cancel', handleCancel);
+
+    return () => {
+      dialog.removeEventListener('cancel', handleCancel);
+    };
+  }, [isSaving]);
+
   return (
     <dialog
       ref={dialogRef}
@@ -43,8 +64,9 @@ export function ApplicationFormDialog({
           type='button'
           aria-label='Close application form'
           title='Close'
+          disabled={isSaving}
           onClick={() => dialogRef.current?.close()}
-          className='flex h-10 w-10 items-center justify-center rounded-md text-2xl text-muted hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
+          className='flex h-10 w-10 items-center justify-center rounded-md text-2xl text-muted hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-50'
         >
           &times;
         </button>

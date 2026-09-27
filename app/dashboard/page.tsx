@@ -52,6 +52,7 @@ export default function Home() {
   const [showDueFollowUps, setShowDueFollowUps] = useState(false);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState('');
@@ -140,6 +141,8 @@ export default function Home() {
       setIsFormOpen(false);
       setEditingApplication(null);
     }
+
+    return wasSaved;
   }
 
   async function handleUpdateApplication(updatedApplication: JobApplication) {
@@ -149,6 +152,8 @@ export default function Home() {
       setIsFormOpen(false);
       setEditingApplication(null);
     }
+
+    return wasSaved;
   }
 
   async function handleDeleteApplication() {
@@ -432,6 +437,7 @@ export default function Home() {
           {user ? (
             isFormOpen && (
               <ApplicationFormDialog
+                isSaving={isSaving}
                 isOpen={isFormOpen}
                 title={
                   editingApplication ? 'Edit application' : 'Add application'
@@ -449,6 +455,8 @@ export default function Home() {
                     setIsFormOpen(false);
                     setEditingApplication(null);
                   }}
+                  isSaving={isSaving}
+                  onSavingChange={setIsSaving}
                 />
               </ApplicationFormDialog>
             )

@@ -11,9 +11,11 @@ import {
 
 type ApplicationFormProps = {
   editingApplication: JobApplication | null;
-  onAddApplication: (application: JobApplication) => void;
-  onUpdateApplication: (application: JobApplication) => void;
+  onAddApplication: (application: JobApplication) => Promise<boolean>;
+  onUpdateApplication: (application: JobApplication) => Promise<boolean>;
   onCancelEdit: () => void;
+  isSaving: boolean;
+  onSavingChange: (isSaving: boolean) => void;
 };
 
 type FormState = {
@@ -59,6 +61,8 @@ function getFormStateFromApplication(application: JobApplication): FormState {
 }
 
 export function ApplicationForm({
+  isSaving,
+  onSavingChange,
   editingApplication,
   onAddApplication,
   onUpdateApplication,
@@ -83,8 +87,10 @@ export function ApplicationForm({
     return () => window.clearTimeout(timeoutId);
   }, [editingApplication]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isSaving) return;
 
     if (
       !formState.company.trim() ||
@@ -113,14 +119,26 @@ export function ApplicationForm({
       followUpAt: formState.followUpAt || undefined,
     };
 
-    if (editingApplication) {
-      onUpdateApplication(application);
-    } else {
-      onAddApplication(application);
-    }
-
-    setFormState(initialFormState);
     setError('');
+
+    onSavingChange(true);
+
+    try {
+      const wasSaved = editingApplication
+        ? await onUpdateApplication(application)
+        : await onAddApplication(application);
+
+      if (!wasSaved) {
+        setError('Could not save application. Please try again.');
+        return;
+      }
+
+      setFormState(initialFormState);
+    } catch {
+      setError('Could not save application. Please try again.');
+    } finally {
+      onSavingChange(false);
+    }
   }
 
   function updateField<Field extends keyof FormState>(
@@ -141,121 +159,128 @@ export function ApplicationForm({
           : 'Keep the essential details in one place so every next step is visible.'}
       </p>
 
-      <form onSubmit={handleSubmit} className='mt-5 grid gap-4'>
-        <TextField
-          label='Company name'
-          value={formState.company}
-          onChange={(value) => updateField('company', value)}
-          required
-        />
-        <TextField
-          label='Position'
-          value={formState.position}
-          onChange={(value) => updateField('position', value)}
-          required
-        />
-        <TextField
-          label='Location'
-          value={formState.location}
-          onChange={(value) => updateField('location', value)}
-        />
-
-        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2'>
-          <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
-            Work mode
-            <select
-              value={formState.workMode}
-              onChange={(event) =>
-                updateField('workMode', event.target.value as WorkMode)
-              }
-              className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
-            >
-              {workModes.map((mode) => (
-                <option key={mode} value={mode}>
-                  {workModeLabels[mode]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
-            Status
-            <select
-              value={formState.status}
-              onChange={(event) =>
-                updateField('status', event.target.value as ApplicationStatus)
-              }
-              className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
-              required
-            >
-              {applicationStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {statusLabels[status]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className='grid gap-4 sm:grid-cols-2'>
+      <form onSubmit={handleSubmit} className='mt-5' aria-busy={isSaving}>
+        <fieldset disabled={isSaving} className='grid min-w-0 gap-4'>
           <TextField
-            label='Applied date'
-            type='date'
-            value={formState.appliedAt}
-            onChange={(value) => updateField('appliedAt', value)}
+            label='Company name'
+            value={formState.company}
+            onChange={(value) => updateField('company', value)}
+            required
           />
           <TextField
-            label='Follow-up date'
-            type='date'
-            value={formState.followUpAt}
-            onChange={(value) => updateField('followUpAt', value)}
+            label='Position'
+            value={formState.position}
+            onChange={(value) => updateField('position', value)}
+            required
           />
-        </div>
-        <TextField
-          label='Salary range'
-          value={formState.salaryRange}
-          onChange={(value) => updateField('salaryRange', value)}
-          placeholder='12k-16k PLN'
-        />
-        <TextField
-          label='Source'
-          value={formState.source}
-          onChange={(value) => updateField('source', value)}
-          placeholder='LinkedIn, referral, company page'
-        />
-
-        <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
-          Notes
-          <textarea
-            value={formState.notes}
-            onChange={(event) => updateField('notes', event.target.value)}
-            rows={4}
-            className='rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent-ring'
-            placeholder='Response details, follow-up date, next steps'
+          <TextField
+            label='Location'
+            value={formState.location}
+            onChange={(value) => updateField('location', value)}
           />
-        </label>
 
-        {error ? (
-          <p className='text-sm font-medium text-danger-text'>{error}</p>
-        ) : null}
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2'>
+            <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
+              Work mode
+              <select
+                value={formState.workMode}
+                onChange={(event) =>
+                  updateField('workMode', event.target.value as WorkMode)
+                }
+                className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
+              >
+                {workModes.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {workModeLabels[mode]}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <div className='mt-1 flex flex-col gap-2 sm:flex-row'>
-          <button
-            type='submit'
-            className='rounded-md bg-accent px-4 py-3 text-sm font-semibold text-on-accent shadow-sm transition hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent-ring'
-          >
-            {isEditing ? 'Save changes' : 'Add application'}
-          </button>
+            <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
+              Status
+              <select
+                value={formState.status}
+                onChange={(event) =>
+                  updateField('status', event.target.value as ApplicationStatus)
+                }
+                className='h-11 rounded-md border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-ring'
+                required
+              >
+                {applicationStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {statusLabels[status]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className='grid gap-4 sm:grid-cols-2'>
+            <TextField
+              label='Applied date'
+              type='date'
+              value={formState.appliedAt}
+              onChange={(value) => updateField('appliedAt', value)}
+            />
+            <TextField
+              label='Follow-up date'
+              type='date'
+              value={formState.followUpAt}
+              onChange={(value) => updateField('followUpAt', value)}
+            />
+          </div>
+          <TextField
+            label='Salary range'
+            value={formState.salaryRange}
+            onChange={(value) => updateField('salaryRange', value)}
+            placeholder='12k-16k PLN'
+          />
+          <TextField
+            label='Source'
+            value={formState.source}
+            onChange={(value) => updateField('source', value)}
+            placeholder='LinkedIn, referral, company page'
+          />
 
-          {isEditing ? (
-            <button
-              type='button'
-              onClick={onCancelEdit}
-              className='rounded-md border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-secondary shadow-sm transition hover:bg-canvas'
-            >
-              Cancel
-            </button>
+          <label className='flex flex-col gap-2 text-sm font-medium text-secondary'>
+            Notes
+            <textarea
+              value={formState.notes}
+              onChange={(event) => updateField('notes', event.target.value)}
+              rows={4}
+              className='rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent-ring'
+              placeholder='Response details, follow-up date, next steps'
+            />
+          </label>
+
+          {error ? (
+            <p className='text-sm font-medium text-danger-text'>{error}</p>
           ) : null}
-        </div>
+
+          <div className='mt-1 flex flex-col gap-2 sm:flex-row'>
+            <button
+              type='submit'
+              disabled={isSaving}
+              className='rounded-md bg-accent px-4 py-3 text-sm font-semibold text-on-accent shadow-sm transition hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:cursor-wait disabled:opacity-50'
+            >
+              {isSaving
+                ? 'Saving...'
+                : isEditing
+                  ? 'Save changes'
+                  : 'Add application'}
+            </button>
+
+            {isEditing ? (
+              <button
+                type='button'
+                onClick={onCancelEdit}
+                className='rounded-md border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-secondary shadow-sm transition hover:bg-canvas'
+              >
+                Cancel
+              </button>
+            ) : null}
+          </div>
+        </fieldset>
       </form>
     </aside>
   );
