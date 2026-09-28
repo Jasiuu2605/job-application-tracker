@@ -27,8 +27,7 @@ Current scope:
 
 Planned scope:
 
-- Production deployment
-- Screenshot and live demo link
+- Add application screenshots
 - React Native companion app using the same Firebase data model
 - Additional dashboard insights and application history
 
@@ -51,6 +50,23 @@ Planned scope:
 - Keep `createdAt` and `updatedAt` timestamps for application records
 - Show success feedback after create, update and delete actions
 - Show error feedback when Firestore actions fail
+
+### CSV Export
+
+- Export all applications belonging to the signed-in user
+- Download a CSV file independently of dashboard filters and pagination
+- Include application details and follow-up dates
+- Generate the file on the server through a Next.js Route Handler
+
+The `GET /api/applications/export` endpoint requires a Firebase ID token
+in the `Authorization: Bearer <token>` header.
+
+The server verifies the token using Firebase Admin SDK and reads
+applications from `users/{uid}/applications`, using the verified user's UID.
+Requests with missing, invalid or expired tokens return HTTP 401.
+
+The response uses UTF-8 with a BOM and disables caching with
+`Cache-Control: no-store`.
 
 ### Tracked Fields
 
@@ -77,6 +93,8 @@ Each job application stores:
 - Filter by work mode
 - Filter applications with due follow-ups
 - Sort by newest, oldest, company name or status
+- Client-side pagination with 20 applications per page
+- First, previous, next and last page navigation
 
 ### User Experience
 
@@ -87,6 +105,11 @@ Each job application stores:
 - Loading state while auth or Firestore data is being checked
 - Error messages for failed Firestore actions
 - Auto-hiding success messages
+- Light, dark and system themes
+- Expandable application details
+- Modal forms for adding and editing applications
+- Disabled form controls and blocked modal dismissal while saving
+- Preserved form input after a failed save
 
 ## Tech Stack
 
@@ -96,13 +119,21 @@ Each job application stores:
 - Tailwind CSS
 - Firebase Authentication
 - Firebase Firestore
+- Firebase Admin SDK
+- Vitest
 
 ## Project Structure
 
 ```txt
 app/
-  layout.tsx               # Root layout and metadata
-  page.tsx                 # Main dashboard page and app state orchestration
+  layout.tsx               # Root layout, providers and metadata
+  page.tsx                 # Public landing page
+  dashboard/
+    page.tsx               # Interactive job application dashboard
+  api/
+    applications/
+      export/
+        route.ts           # Authenticated CSV export endpoint
 
 src/
   components/
@@ -115,9 +146,12 @@ src/
 
   hooks/
     useAuthUser.ts         # Firebase auth state listener
+    useAuth.ts             # Access shared authentication context
+    useApplications.ts     # Application data, CRUD and request states
 
   lib/
     firebase.ts            # Firebase client configuration
+    firebase-admin.ts      # Server-only Firebase Admin initialization
 
   services/
     application.service.ts # Firestore CRUD functions for applications
@@ -140,9 +174,14 @@ firestore.rules            # Firestore security rules
 ### Job Application
 
 ```ts
-type ApplicationStatus = "saved" | "applied" | "interview" | "rejected" | "offer";
+type ApplicationStatus =
+  | 'saved'
+  | 'applied'
+  | 'interview'
+  | 'rejected'
+  | 'offer';
 
-type WorkMode = "remote" | "hybrid" | "onsite";
+type WorkMode = 'remote' | 'hybrid' | 'onsite';
 
 type JobApplication = {
   id: string;
@@ -224,7 +263,8 @@ The service exposes:
 - `updateApplication(userId, application)`
 - `deleteApplication(userId, applicationId)`
 
-The page component passes the authenticated Firebase user id into these functions. UI components do not call Firestore directly.
+The `useApplications` hook passes the authenticated Firebase user's UID
+to these service functions. UI components do not call Firestore directly.
 
 Firestore does not accept `undefined` field values, so application data is cleaned before write operations.
 
@@ -274,6 +314,29 @@ NEXT_PUBLIC_FIREBASE_APP_ID=
 
 Firebase values can be copied from Firebase Console under project settings for the web app.
 
+### Server-side Firebase Admin
+
+CSV export also requires these private variables in `.env.local`:
+
+```env
+FIREBASE_ADMIN_PROJECT_ID=your-project-id
+FIREBASE_ADMIN_CLIENT_EMAIL=your-service-account-email
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+```
+
+Use credentials from a Firebase service account. Never commit real
+credentials or the downloaded service account JSON file.
+
+These variables must not use the `NEXT_PUBLIC_` prefix.
+They are used exclusively on the server.
+
+The server converts literal `\n` sequences in the private key into
+line breaks.
+
+Firebase Admin bypasses Firestore Security Rules, so the export endpoint
+enforces access by verifying the Firebase ID token and using its UID
+to select the user's applications.
+
 ## Firebase Setup
 
 1. Create a Firebase project.
@@ -285,6 +348,41 @@ Firebase values can be copied from Firebase Console under project settings for t
 7. Run the app locally and sign in with Google.
 
 For deployment, add the production domain to Firebase Authentication authorized domains.
+
+## Deployment on Vercel
+
+1. Import the GitHub repository into Vercel.
+2. Select Node.js 24.x in the project settings.
+3. Add all Firebase client and Firebase Admin environment variables
+   listed above to the Production environment.
+4. Add the production domain to Firebase Authentication authorized domains.
+5. Deploy the project.
+
+Enter environment variable values without surrounding quotes.
+For the private key, preserve the literal `\n` sequences.
+
+### Firebase Admin module compatibility
+
+The current deployment uses this additional Production variable:
+
+```env
+NODE_OPTIONS=--experimental-require-module
+```
+
+It enables loading ES modules through `require()`, which the installed
+Firebase Admin dependency chain needs in this deployment environment.
+
+This setting resolved an `ERR_REQUIRE_ESM` error involving
+`jwks-rsa` and `jose`. Reassess it when updating dependencies or the runtime.
+
+### Applying configuration changes
+
+Environment variable changes require a new deployment.
+Use Redeploy and wait for the Ready status before testing.
+
+Verify that CSV export downloads a file when used from the signed-in app.
+Opening `/api/applications/export` directly without an Authorization
+header should return HTTP 401 with `Authentication required.`
 
 ## Getting Started
 
@@ -313,13 +411,16 @@ npm run dev
 npm run lint
 npm run build
 npm run start
+npm run test
 ```
 
 ## Development Notes
 
-- The app is a client-side Next.js page because it uses interactive React state and Firebase client SDK calls.
+- The app uses the Next.js App Router with a public landing page,
+  an interactive dashboard at `/dashboard` and a server-side CSV export endpoint.
 - Firebase config values prefixed with `NEXT_PUBLIC_` are exposed to the browser by design; access control is handled by Firebase Authentication and Firestore rules.
-- The applications list is owned by the page component.
+- The `useApplications` hook manages application data, Firestore operations,
+  loading states and action feedback.
 - `ApplicationForm` keeps local form state and is reused for both create and edit flows.
 - Firestore is treated as the source of truth.
 - Mock data and localStorage persistence were removed after Firestore integration.
@@ -327,8 +428,7 @@ npm run start
 
 ## Roadmap
 
-- Deploy the app
-- Add screenshots and a live demo link
+- Add application screenshots
 - Add a React Native companion app using the same Firebase data model
 - Add dashboard insights and status history
 - Add stronger profile management
