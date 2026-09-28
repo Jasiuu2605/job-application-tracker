@@ -2,7 +2,7 @@ import {
   statusLabels,
   workModeLabels,
   type JobApplication,
-} from '@/src/types/application';
+} from '../types/application';
 
 const csvHeaders = [
   'No.',
